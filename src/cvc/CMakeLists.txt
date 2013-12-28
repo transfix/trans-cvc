@@ -1,9 +1,20 @@
 cmake_minimum_required(VERSION 2.6)
 
+if(WIN32)
+  add_definitions(-D__WINDOWS__)
+endif(WIN32)
+
 file(GLOB INCLUDE_FILES ../../inc/cvc/*.[Hh])
 set(SOURCE_FILES
+  anisotropic_diffusion.cpp
   app.cpp
+  bilateral_filter.cpp
+  contrast_enhancement.cpp
+  gdtv_filter.cpp
   state.cpp
+  utility.cpp
+  voxels.cpp
+  volume.cpp
 )
 
 include_directories(

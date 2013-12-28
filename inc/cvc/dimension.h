@@ -26,6 +26,7 @@
 #define __CVC_DIMENSION_H__
 
 #include <cvc/types.h>
+#include <cvc/exception.h>
 
 // If your compiler complains the "The class "cvc::Dimension" has no member "xdim"."
 // Add your architecture Q_OS_XXXX flag (see qglobal.h) in this list.
@@ -35,6 +36,8 @@
 
 namespace CVC_NAMESPACE
 {
+  CVC_DEF_EXCEPTION(null_dimension);
+
   class dimension
   {
   public:
