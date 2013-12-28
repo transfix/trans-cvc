@@ -11,10 +11,14 @@ set(SOURCE_FILES
   bilateral_filter.cpp
   contrast_enhancement.cpp
   gdtv_filter.cpp
+  null_io.cpp
+  rawiv_io.cpp
   state.cpp
   utility.cpp
   voxels.cpp
   volume.cpp
+  volume_file_io.cpp
+  volume_file_info.cpp
 )
 
 include_directories(

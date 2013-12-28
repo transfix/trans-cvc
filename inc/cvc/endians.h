@@ -20,10 +20,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: endians.h 4742 2011-10-21 22:09:44Z transfix $ */
+#ifndef __CVC_ENDIANS_H__
+#define __CVC_ENDIANS_H__
 
-#ifndef __ENDIANS_H__
-#define __ENDIANS_H__
+#include <cvc/namespace.h>
 
 #define SWAP_64(a) \
   { \
@@ -53,10 +53,14 @@
     ch[1] = d; \
   }
 
-static inline int big_endian()
+
+namespace CVC_NAMESPACE
 {
-  long one=1;
-  return !(*((char *)(&one)));
+  static inline int big_endian()
+  {
+    long one=1;
+    return !(*((char *)(&one)));
+  }
 }
 
 #endif

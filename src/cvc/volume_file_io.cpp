@@ -138,26 +138,26 @@ namespace CVC_NAMESPACE
     std::vector<volume> vols;
     volume_file_info vfi(filename);
     vfi.boundingBox(bbox);
-    readVolumeFile(vols,filename);
+    CVC_NAMESPACE::readVolumeFile(vols,filename);
     BOOST_FOREACH(volume& vol, vols)
       vol.boundingBox(bbox);
-    createVolumeFile(filename,vfi); //TODO: don't overwrite existing file until temp file write is complete
-    writeVolumeFile(vols,filename);
+    CVC_NAMESPACE::createVolumeFile(filename,vfi); //TODO: don't overwrite existing file until temp file write is complete
+    CVC_NAMESPACE::writeVolumeFile(vols,filename);
   }
 
   // --------------------------
   // volume_file_io::handlersMap
   // --------------------------
   // Purpose:
-  //   Static initialization of handler map.  Clients use the HandlerMap
+  //   Static initialization of handler map.  Clients use the handler_map
   //   to add themselves to the collection of objects that are to be used
   //   to perform volume file i/o operations.
   // ---- Change History ----
   // 11/13/2009 -- Joe R. -- Initially implemented.
-  volume_file_io::HandlerMap& volume_file_io::handlerMap()
+  volume_file_io::handler_map& volume_file_io::handlerMap()
   {
     //It's ok to leak: http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.15
-    static HandlerMap* p = initializeMap();
+    static handler_map* p = initializeMap();
     return *p;
   }
 
@@ -169,7 +169,7 @@ namespace CVC_NAMESPACE
   // ---- Change History ----
   // 11/13/2009 -- Joe R. -- Initially implemented.
   // 11/20/2009 -- Joe R. -- Removed extension arg.  Now using what the object provides.
-  void volume_file_io::insertHandler(const Ptr& vfio)
+  void volume_file_io::insertHandler(const ptr& vfio)
   {
     insertHandler(handlerMap(),vfio);
   }
@@ -181,21 +181,21 @@ namespace CVC_NAMESPACE
   //   Convenence function for removing objects from the map.
   // ---- Change History ----
   // 11/13/2009 -- Joe R. -- Initially implemented.
-  void volume_file_io::removeHandler(const Ptr& vfio)
+  void volume_file_io::removeHandler(const ptr& vfio)
   {
-    for(HandlerMap::iterator i = handlerMap().begin();
+    for(handler_map::iterator i = handlerMap().begin();
 	i != handlerMap().end();
 	i++)
       {
-	Handlers handlers;
-	for(Handlers::iterator j = i->second.begin();
+	handlers h;
+	for(handlers::iterator j = i->second.begin();
 	    j != i->second.end();
 	    j++)
 	  {
 	    if(*j != vfio)
-	      handlers.push_back(*j);
+	      h.push_back(*j);
 	  }
-	i->second = handlers;
+	i->second = h;
       }
   }
 
@@ -208,19 +208,19 @@ namespace CVC_NAMESPACE
   // 11/13/2009 -- Joe R. -- Initially implemented.
   void volume_file_io::removeHandler(const std::string& id)
   {
-    for(HandlerMap::iterator i = handlerMap().begin();
+    for(handler_map::iterator i = handlerMap().begin();
 	i != handlerMap().end();
 	i++)
       {
-	Handlers handlers;
-	for(Handlers::iterator j = i->second.begin();
+	handlers h;
+	for(handlers::iterator j = i->second.begin();
 	    j != i->second.end();
 	    j++)
 	  {
 	    if((*j)->id() != id)
-	      handlers.push_back(*j);
+	      h.push_back(*j);
 	  }
-	i->second = handlers;
+	i->second = h;
       }    
   }
 
@@ -234,7 +234,7 @@ namespace CVC_NAMESPACE
   std::vector<std::string> volume_file_io::getExtensions()
   {
     std::vector<std::string> ret;
-    BOOST_FOREACH(HandlerMap::value_type& i, handlerMap())
+    BOOST_FOREACH(handler_map::value_type& i, handlerMap())
       {
         ret.push_back(i.first);
       }
@@ -245,37 +245,37 @@ namespace CVC_NAMESPACE
   // volume_file_io::initializeMap
   // ----------------------------
   // Purpose:
-  //   Adds the standard volume_file_io objects to a new HandlerMap object
+  //   Adds the standard volume_file_io objects to a new handler_map object
   // ---- Change History ----
   // 11/20/2009 -- Joe R. -- Initially implemented.
-  volume_file_io::HandlerMap *volume_file_io::initializeMap()
+  volume_file_io::handler_map *volume_file_io::initializeMap()
   {
-    HandlerMap *map = new HandlerMap;
+    handler_map *map = new handler_map;
 
 #if 0
-    HandlerMap &ref = *map;
-    insertHandler(ref, Ptr(new Null_IO));
-    insertHandler(ref, Ptr(new RawIV_IO));
-    insertHandler(ref, Ptr(new RawIV_IO(true)));
-    insertHandler(ref, Ptr(new RawV_IO));
-    insertHandler(ref, Ptr(new MRC_IO));
-    insertHandler(ref, Ptr(new Spider_IO));
-    insertHandler(ref, Ptr(new VTK_IO));
+    handler_map &ref = *map;
+    insertHandler(ref, ptr(new Null_IO));
+    insertHandler(ref, ptr(new RawIV_IO));
+    insertHandler(ref, ptr(new RawIV_IO(true)));
+    insertHandler(ref, ptr(new RawV_IO));
+    insertHandler(ref, ptr(new MRC_IO));
+    insertHandler(ref, ptr(new Spider_IO));
+    insertHandler(ref, ptr(new VTK_IO));
 
 #ifdef VOLMAGICK_USING_IMOD_MRC
-    insertHandler(ref, Ptr(new IMOD_MRC_IO));
+    insertHandler(ref, ptr(new IMOD_MRC_IO));
 #endif
 
 #ifdef VOLMAGICK_USING_VOLMAGICK_INR
-    insertHandler(ref, Ptr(new INR_IO));
+    insertHandler(ref, ptr(new INR_IO));
 #endif
 
 #ifdef VOLMAGICK_USING_HDF5
-    insertHandler(ref, Ptr(new HDF5_IO));
+    insertHandler(ref, ptr(new HDF5_IO));
 #endif
 
 #ifdef VOLMAGICK_USING_QTIMAGE
-    insertHandler(ref, Ptr(new QtImage_IO));
+    insertHandler(ref, ptr(new QtImage_IO));
 #endif
 #endif
     
@@ -289,8 +289,8 @@ namespace CVC_NAMESPACE
   //   Convenence function for adding objects to the specified map.
   // ---- Change History ----
   // 11/20/2009 -- Joe R. -- Initially implemented.
-  void volume_file_io::insertHandler(HandlerMap& hm,
-				   const Ptr& vfio)
+  void volume_file_io::insertHandler(handler_map& hm,
+				     const ptr& vfio)
   {
     if(!vfio) return;
     for(volume_file_io::extension_list::const_iterator i =   
@@ -349,10 +349,10 @@ namespace CVC_NAMESPACE
 	if(volume_file_io::handlerMap()[what[2]].empty())
 	  throw unsupported_volume_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
 					     std::string(": Cannot read ") + filename);
-	volume_file_io::Handlers& handlers = volume_file_io::handlerMap()[what[2]];
+	volume_file_io::handlers& h = volume_file_io::handlerMap()[what[2]];
 	//use the first handler that succeds
-	for(volume_file_io::Handlers::iterator i = handlers.begin();
-	    i != handlers.end();
+	for(volume_file_io::handlers::iterator i = h.begin();
+	    i != h.end();
 	    i++)
 	  try
 	    {
@@ -411,10 +411,10 @@ namespace CVC_NAMESPACE
 	if(volume_file_io::handlerMap()[what[2]].empty())
 	  throw unsupported_volume_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
 					     std::string(": Cannot read ") + filename);
-	volume_file_io::Handlers& handlers = volume_file_io::handlerMap()[what[2]];
+	volume_file_io::handlers& h = volume_file_io::handlerMap()[what[2]];
 	//use the first handler that succeds
-	for(volume_file_io::Handlers::iterator i = handlers.begin();
-	    i != handlers.end();
+	for(volume_file_io::handlers::iterator i = h.begin();
+	    i != h.end();
 	    i++)
 	  try
 	    {
@@ -486,10 +486,10 @@ namespace CVC_NAMESPACE
 	if(volume_file_io::handlerMap()[what[2]].empty())
 	  throw unsupported_volume_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
 					     std::string(": Cannot write ") + filename);
-	volume_file_io::Handlers& handlers = volume_file_io::handlerMap()[what[2]];
+	volume_file_io::handlers& h = volume_file_io::handlerMap()[what[2]];
 	//use the first handler that succeds
-	for(volume_file_io::Handlers::iterator i = handlers.begin();
-	    i != handlers.end();
+	for(volume_file_io::handlers::iterator i = h.begin();
+	    i != h.end();
 	    i++)
 	  try
 	    {
@@ -531,7 +531,7 @@ namespace CVC_NAMESPACE
 		       unsigned int var, unsigned int time,
 		       const bounding_box& subvolbox)
   {
-    CVC::ThreadInfo ti(BOOST_CURRENT_FUNCTION);
+    thread_info ti(BOOST_CURRENT_FUNCTION);
 
     volume localvol(vol);
     volume_file_info volinfo(filename);
@@ -640,10 +640,10 @@ namespace CVC_NAMESPACE
 	if(volume_file_io::handlerMap()[what[2]].empty())
 	  throw unsupported_volume_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
 					     std::string(": Cannot create ") + filename);
-	volume_file_io::Handlers& handlers = volume_file_io::handlerMap()[what[2]];
+	volume_file_io::handlers& h = volume_file_io::handlerMap()[what[2]];
 	//use the first handler that succeds
-	for(volume_file_io::Handlers::iterator i = handlers.begin();
-	    i != handlers.end();
+	for(volume_file_io::handlers::iterator i = h.begin();
+	    i != h.end();
 	    i++)
 	  try
 	    {
@@ -689,8 +689,7 @@ namespace CVC_NAMESPACE
   //  Changes a volume file's bounding box.
   // ---- Change History ----
   // 04/06/2012 -- Joe R. -- Initially implemented.
-  void writeBoundingBox(const bounding_box& bbox, const std::string& filename)
-                        
+  void writeBoundingBox(const bounding_box& bbox, const std::string& filename)                        
   {
     std::string errors;
     boost::smatch what;
@@ -707,10 +706,10 @@ namespace CVC_NAMESPACE
 	if(volume_file_io::handlerMap()[what[2]].empty())
 	  throw unsupported_volume_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
 					     std::string(": Cannot write ") + filename);
-	volume_file_io::Handlers& handlers = volume_file_io::handlerMap()[what[2]];
+	volume_file_io::handlers& h = volume_file_io::handlerMap()[what[2]];
 	//use the first handler that succeds
-	for(volume_file_io::Handlers::iterator i = handlers.begin();
-	    i != handlers.end();
+	for(volume_file_io::handlers::iterator i = h.begin();
+	    i != h.end();
 	    i++)
 	  try
 	    {

@@ -53,17 +53,17 @@ namespace CVC_NAMESPACE
     std::string objectName;
 
     boost::tie(actualFileName, objectName) =
-      VolumeFile_IO::splitRawFilename(filename);
+      volume_file_io::splitRawFilename(filename);
 
     if(boost::regex_match(actualFileName, what, file_extension))
       {
-	if(VolumeFile_IO::handlerMap()[what[2]].empty())
-	  throw UnsupportedVolumeFileType(std::string(BOOST_CURRENT_FUNCTION) + 
-					  std::string(": Cannot read ") + filename);
-	VolumeFile_IO::Handlers& handlers = VolumeFile_IO::handlerMap()[what[2]];
+	if(volume_file_io::handlerMap()[what[2]].empty())
+	  throw unsupported_volume_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
+					     std::string(": Cannot read ") + filename);
+	volume_file_io::handlers& h = volume_file_io::handlerMap()[what[2]];
 	//use the first handler that succeds
-	for(VolumeFile_IO::Handlers::iterator i = handlers.begin();
-	    i != handlers.end();
+	for(volume_file_io::handlers::iterator i = h.begin();
+	    i != h.end();
 	    i++)
 	  try
 	    {
@@ -73,12 +73,12 @@ namespace CVC_NAMESPACE
 		  return;
 		}
 	    }
-	  catch(VolMagick::Exception& e)
+	  catch(exception& e)
 	    {
 	      errors += std::string(" :: ") + e.what();
 	    }
       }
-    throw UnsupportedVolumeFileType(
+    throw unsupported_volume_file_type(
       boost::str(
 	boost::format("%1% : Cannot read '%2%'%3%") % 
 	BOOST_CURRENT_FUNCTION %

@@ -180,22 +180,22 @@ namespace CVC_NAMESPACE
     // 04/06/2012 -- Joe R. -- Initial implementation.
     virtual void writeBoundingBox(const bounding_box& bbox, const std::string& filename) const;
 
-    typedef boost::shared_ptr<volume_file_io> Ptr;
-    typedef std::vector<Ptr> Handlers;
+    typedef boost::shared_ptr<volume_file_io> ptr;
+    typedef std::vector<ptr> handlers;
     typedef std::map<
       std::string, /* file extension */
-      Handlers > HandlerMap;
+      handlers > handler_map;
 
     // --------------------------
     // volume_file_io::handlerMap
     // --------------------------
     // Purpose:
-    //   Static initialization of handler map.  Clients use the HandlerMap
+    //   Static initialization of handler map.  Clients use the handler_map
     //   to add themselves to the collection of objects that are to be used
     //   to perform volume file i/o operations.
     // ---- Change History ----
     // 11/13/2009 -- Joe R. -- Initial implementation.
-    static HandlerMap& handlerMap();
+    static handler_map& handlerMap();
 
     // -----------------------------
     // volume_file_io::insertHandler
@@ -204,7 +204,7 @@ namespace CVC_NAMESPACE
     //   Convenience function for adding objects to the map.
     // ---- Change History ----
     // 11/13/2009 -- Joe R. -- Initial implementation.
-    static void insertHandler(const Ptr& vfio);
+    static void insertHandler(const ptr& vfio);
 
     // -----------------------------
     // volume_file_io::removeHandler
@@ -213,7 +213,7 @@ namespace CVC_NAMESPACE
     //   Convenience function for removing objects from the map.
     // ---- Change History ----
     // 11/13/2009 -- Joe R. -- Initial implementation.
-    static void removeHandler(const Ptr& vfio);
+    static void removeHandler(const ptr& vfio);
 
     // -----------------------------
     // volume_file_io::removeHandler
@@ -238,10 +238,10 @@ namespace CVC_NAMESPACE
     // volume_file_io::initializeMap
     // -----------------------------
     // Purpose:
-    //   Adds the standard volume_file_io objects to a new HandlerMap object
+    //   Adds the standard volume_file_io objects to a new handler_map object
     // ---- Change History ----
     // 11/13/2009 -- Joe R. -- Initial implementation.
-    static HandlerMap *initializeMap();
+    static handler_map *initializeMap();
 
     // -----------------------------
     // volume_file_io::insertHandler
@@ -250,7 +250,7 @@ namespace CVC_NAMESPACE
     //   Convenience function for adding objects to the specified map.
     // ---- Change History ----
     // 11/13/2009 -- Joe R. -- Initial implementation.
-    static void insertHandler(HandlerMap& hm, const Ptr& vfio);
+    static void insertHandler(handler_map& hm, const ptr& vfio);
   };
 
   // ------------------------- Volume I/O API
