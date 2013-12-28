@@ -4,13 +4,13 @@
         Authors: Joe Rivera <transfix@ices.utexas.edu>
         Advisor: Chandrajit Bajaj <bajaj@cs.utexas.edu>
 
-  This file is part of libCVC.
+  This file is part of libcvc.
 
-  libCVC is free software; you can redistribute it and/or
+  libcvc is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License version 2.1 as published by the Free Software Foundation.
 
-  libCVC is distributed in the hope that it will be useful,
+  libcvc is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
@@ -158,13 +158,13 @@ namespace CVC_NAMESPACE
     bool isData(const std::string& key)
     {
       try
-	{
-	  T val = data<T>(key);
-	}
+        {
+          T val = data<T>(key);
+        }
       catch(std::exception& e)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       return true;
     }
 
@@ -175,8 +175,8 @@ namespace CVC_NAMESPACE
       std::vector<std::string> keys;
       data_map map = data();
       BOOST_FOREACH(data_map::value_type val, map)
-	if(isData<T>(val.first))
-	  keys.push_back(val.first);
+        if(isData<T>(val.first))
+          keys.push_back(val.first);
       return keys;
     }
 
@@ -450,7 +450,7 @@ namespace CVC_NAMESPACE
     {
     public:
       scoped_lock(const std::string& name,
-		  const std::string& info = std::string()) : 
+                  const std::string& info = std::string()) : 
         _scopedLock(*app::instance().mutex(name)),
         _name(name)
           {

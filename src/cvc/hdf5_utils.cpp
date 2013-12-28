@@ -4,13 +4,13 @@
         Authors: Joe Rivera <transfix@ices.utexas.edu>
         Advisor: Chandrajit Bajaj <bajaj@cs.utexas.edu>
 
-  This file is part of libCVC.
+  This file is part of libcvc.
 
-  libCVC is free software; you can redistribute it and/or
+  libcvc is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License version 2.1 as published by the Free Software Foundation.
 
-  libCVC is distributed in the hope that it will be useful,
+  libcvc is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
@@ -19,8 +19,6 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
-/* $Id: HDF5_Utilities.cpp 5530 2012-05-07 17:13:53Z arand $ */
 
 #define H5_SIZEOF_SSIZE_T 0
 
@@ -70,7 +68,7 @@ namespace CVC_NAMESPACE
         case Int64: return PredType::NATIVE_INT64;
         case Undefined: throw hdf5_exception("No HDF5 PredType for undefined type");
         default: throw hdf5_exception("No H5::PredType for cvc::data_type " + 
-				      boost::lexical_cast<std::string>(uint64(vt)));
+                                      boost::lexical_cast<std::string>(uint64(vt)));
         }
     }
 
@@ -306,9 +304,9 @@ namespace CVC_NAMESPACE
     {
       scoped_lock lock(hdf5_filename,BOOST_CURRENT_FUNCTION);
       cvcapp.log(10,boost::str(boost::format("%1%: %2%, %3%\n") 
-                              % BOOST_CURRENT_FUNCTION
-                              % hdf5_filename
-                              % hdf5_objname));
+			       % BOOST_CURRENT_FUNCTION
+			       % hdf5_filename
+			       % hdf5_objname));
 
       try
         {
@@ -341,9 +339,9 @@ namespace CVC_NAMESPACE
     {
       scoped_lock lock(hdf5_filename,BOOST_CURRENT_FUNCTION);
       cvcapp.log(10,boost::str(boost::format("%1%: %2%, %3%\n") 
-                              % BOOST_CURRENT_FUNCTION
-                              % hdf5_filename
-                              % hdf5_objname));
+			       % BOOST_CURRENT_FUNCTION
+			       % hdf5_filename
+			       % hdf5_objname));
       
       try
         {
@@ -375,9 +373,9 @@ namespace CVC_NAMESPACE
                       const std::string& hdf5_objname)
     {
       cvcapp.log(10,boost::str(boost::format("%1%: %2%, %3%\n") 
-                              % BOOST_CURRENT_FUNCTION
-                              % hdf5_filename
-                              % hdf5_objname));
+			       % BOOST_CURRENT_FUNCTION
+			       % hdf5_filename
+			       % hdf5_objname));
       return 
         isGroup(hdf5_filename,hdf5_objname) ||
         isDataSet(hdf5_filename,hdf5_objname);
@@ -399,9 +397,9 @@ namespace CVC_NAMESPACE
 
       scoped_lock lock(hdf5_filename,BOOST_CURRENT_FUNCTION);
       cvcapp.log(10,str(format("%1%: %2%, %3%\n") 
-                       % BOOST_CURRENT_FUNCTION
-                       % hdf5_filename
-                       % hdf5_objname));
+			% BOOST_CURRENT_FUNCTION
+			% hdf5_filename
+			% hdf5_objname));
 
       try
         {
@@ -411,9 +409,9 @@ namespace CVC_NAMESPACE
       catch(H5::Exception& error)
         {
           throw hdf5_exception(str(format("filename: %s, object: %s, msg: %s")
-				   % hdf5_filename
-				   % hdf5_objname
-				   % error.getDetailMsg()));
+                                   % hdf5_filename
+                                   % hdf5_objname
+                                   % error.getDetailMsg()));
         }
     }
 
@@ -430,8 +428,8 @@ namespace CVC_NAMESPACE
 
       scoped_lock lock(hdf5_filename,BOOST_CURRENT_FUNCTION);
       cvcapp.log(10,str(format("%1%: %2%\n") 
-                       % BOOST_CURRENT_FUNCTION
-                       % hdf5_filename));
+			% BOOST_CURRENT_FUNCTION
+			% hdf5_filename));
 
       try
         {
@@ -440,8 +438,8 @@ namespace CVC_NAMESPACE
       catch(H5::Exception& error)
         {
           throw hdf5_exception(str(format("filename: %s, msg: %s")
-				   % hdf5_filename
-				   % error.getDetailMsg()));
+                                   % hdf5_filename
+                                   % error.getDetailMsg()));
         }
     }
 
@@ -471,9 +469,9 @@ namespace CVC_NAMESPACE
           removeObject(hdf5_filename,hdf5_objname);
         else
           throw hdf5_exception(str(format("filename: %s, object: %s, msg: %s")
-				   % hdf5_filename
-				   % hdf5_objname
-				   % "object exists!"));
+                                   % hdf5_filename
+                                   % hdf5_objname
+                                   % "object exists!"));
 
       {
         scoped_lock lock(hdf5_filename,BOOST_CURRENT_FUNCTION);
@@ -485,9 +483,9 @@ namespace CVC_NAMESPACE
         catch(H5::Exception& error)
           {
             throw hdf5_exception(str(format("filename: %s, object: %s, msg: %s")
-				     % hdf5_filename
-				     % hdf5_objname
-				     % error.getDetailMsg()));
+                                     % hdf5_filename
+                                     % hdf5_objname
+                                     % error.getDetailMsg()));
           }
       }
     }
@@ -524,9 +522,9 @@ namespace CVC_NAMESPACE
           removeObject(hdf5_filename,hdf5_objname);
         else
           throw hdf5_exception(str(format("filename: %s, object: %s, msg: %s")
-				   % hdf5_filename
-				   % hdf5_objname
-				   % "object exists!"));
+                                   % hdf5_filename
+                                   % hdf5_objname
+                                   % "object exists!"));
 
       {
         scoped_lock lock(hdf5_filename,BOOST_CURRENT_FUNCTION);
@@ -554,8 +552,8 @@ namespace CVC_NAMESPACE
 
             std::string groupPath = algorithm::join(groupNames,"/");
             cvcapp.log(10,str(format("%1%: group: %2%\n")
-                                    % BOOST_CURRENT_FUNCTION
-                                    % groupPath));
+			      % BOOST_CURRENT_FUNCTION
+			      % groupPath));
             shared_ptr<Group> cvc_group = 
               getGroup(*file,groupPath,createGroups);        
 
@@ -593,7 +591,7 @@ namespace CVC_NAMESPACE
               };
 
             shared_ptr<H5::DataSet> dataset;
-		
+                
             switch(dataType)
               {
               case UChar:
@@ -674,7 +672,7 @@ namespace CVC_NAMESPACE
                         plist
                       )
                     )
-                  );		      
+                  );                  
                 }
                 break;
               case Float:
@@ -701,7 +699,7 @@ namespace CVC_NAMESPACE
                         plist
                       )
                     )
-                  );		      
+                  );                  
                 }
                 break;
               case Double:
@@ -728,7 +726,7 @@ namespace CVC_NAMESPACE
                         plist
                       )
                     )
-                  );		      
+                  );                  
                 }
                 break;
               case UInt64:
@@ -755,7 +753,7 @@ namespace CVC_NAMESPACE
                         plist
                       )
                     )
-                  );		      
+                  );                  
                 }
                 break;
               case Char:
@@ -782,15 +780,15 @@ namespace CVC_NAMESPACE
                         plist
                       )
                     )
-                  );		      
+                  );                  
                 }
                 break;
               default:
                 throw write_error(
                   str(
-                    format("%1% : invalid type :: %2%") % 
-                    BOOST_CURRENT_FUNCTION %
-                    dataType
+                    format("%1% : invalid type :: %2%") 
+		    % BOOST_CURRENT_FUNCTION 
+		    % dataType
                   )
                 );
                 break;
@@ -800,9 +798,9 @@ namespace CVC_NAMESPACE
           {
             using namespace boost;
             throw hdf5_exception(str(format("filename: %s, object: %s, msg: %s")
-				     % hdf5_filename
-				     % hdf5_objname
-				     % error.getDetailMsg()));
+                                     % hdf5_filename
+                                     % hdf5_objname
+                                     % error.getDetailMsg()));
           }
       }
 
@@ -976,7 +974,7 @@ namespace CVC_NAMESPACE
         throw hdf5_exception("filename: " + hdf5_filename + ", No such dataset " + hdf5_objname);
 
       bounding_box boundingBox = getObjectBoundingBox(hdf5_filename,
-						      hdf5_objname);
+                                                      hdf5_objname);
       dimension dim = getObjectDimension(hdf5_filename,
                                                hdf5_objname);
       double xspan = dim.xdim == 0 ? 1.0 : (boundingBox.maxx-boundingBox.minx)/(dim.xdim-1);
@@ -984,9 +982,9 @@ namespace CVC_NAMESPACE
       double zspan = dim.zdim == 0 ? 1.0 : (boundingBox.maxz-boundingBox.minz)/(dim.zdim-1);
 
       dimension fulldim(
-	1+(subvolbox.maxx-subvolbox.minx)/xspan,
-	1+(subvolbox.maxy-subvolbox.miny)/yspan,
-	1+(subvolbox.maxz-subvolbox.minz)/zspan
+        1+(subvolbox.maxx-subvolbox.minx)/xspan,
+        1+(subvolbox.maxy-subvolbox.miny)/yspan,
+        1+(subvolbox.maxz-subvolbox.minz)/zspan
       );
 
       return fulldim;
@@ -1017,17 +1015,17 @@ namespace CVC_NAMESPACE
         throw hdf5_exception("filename: " + hdf5_filename + ", No such dataset " + hdf5_objname);
 
       bounding_box boundingBox = getObjectBoundingBox(hdf5_filename,
-						      hdf5_objname);
+                                                      hdf5_objname);
       dimension dim = getObjectDimension(hdf5_filename,
-					 hdf5_objname);
+                                         hdf5_objname);
       double xspan = dim.xdim == 0 ? 1.0 : (boundingBox.maxx-boundingBox.minx)/(dim.xdim-1);
       double yspan = dim.ydim == 0 ? 1.0 : (boundingBox.maxy-boundingBox.miny)/(dim.ydim-1);
       double zspan = dim.zdim == 0 ? 1.0 : (boundingBox.maxz-boundingBox.minz)/(dim.zdim-1);
 
       dimension fulldim(
-	1+(subvolbox.maxx-subvolbox.minx)/xspan,
-	1+(subvolbox.maxy-subvolbox.miny)/yspan,
-	1+(subvolbox.maxz-subvolbox.minz)/zspan
+        1+(subvolbox.maxx-subvolbox.minx)/xspan,
+        1+(subvolbox.maxy-subvolbox.miny)/yspan,
+        1+(subvolbox.maxz-subvolbox.minz)/zspan
       );
 
       if(fulldim.isNull())
@@ -1166,7 +1164,7 @@ namespace CVC_NAMESPACE
     // 07/17/2011 -- Joe R. -- Initial implementation.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     data_type getDataSetType(const std::string& hdf5_filename,
-			     const std::string& hdf5_objname)
+                             const std::string& hdf5_objname)
     {
       cvcapp.log(10,boost::str(boost::format("%1%: %2%, %3%\n") 
                                % BOOST_CURRENT_FUNCTION
@@ -1235,9 +1233,9 @@ namespace CVC_NAMESPACE
         catch( H5::Exception& error )
           {
             throw hdf5_exception(str(format("filename: %s, object: %s, msg: %s")
-				     % hdf5_filename
-				     % hdf5_objname
-				     % error.getDetailMsg()));
+                                     % hdf5_filename
+                                     % hdf5_objname
+                                     % error.getDetailMsg()));
           }        
       }
 

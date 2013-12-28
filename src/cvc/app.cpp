@@ -4,13 +4,13 @@
         Authors: Joe Rivera <transfix@ices.utexas.edu>
         Advisor: Chandrajit Bajaj <bajaj@cs.utexas.edu>
 
-  This file is part of libCVC.
+  This file is part of libcvc.
 
-  libCVC is free software; you can redistribute it and/or
+  libcvc is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License version 2.1 as published by the Free Software Foundation.
 
-  libCVC is distributed in the hope that it will be useful,
+  libcvc is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
@@ -101,19 +101,19 @@ namespace CVC_NAMESPACE
         std::atexit(wait_for_threads);
 
 #ifdef USING_LOG4CPLUS_DEFAULT
-	// Initialize log4cplus
-	std::ifstream testfile("log4cplus.properties");
-	if (testfile)
-	  {
-	    testfile.close();
-	    log4cplus::PropertyConfigurator::doConfigure("log4cplus.properties");
-	  }
+        // Initialize log4cplus
+        std::ifstream testfile("log4cplus.properties");
+        if (testfile)
+          {
+            testfile.close();
+            log4cplus::PropertyConfigurator::doConfigure("log4cplus.properties");
+          }
         else 
-	  {
-	    log4cplus::BasicConfigurator::doConfigure();
-	  }
-	static log4cplus::Logger logger = log4cplus::Logger::getInstance("app");
-	LOG4CPLUS_ERROR(logger, "log4cplus initialized");
+          {
+            log4cplus::BasicConfigurator::doConfigure();
+          }
+        static log4cplus::Logger logger = log4cplus::Logger::getInstance("app");
+        LOG4CPLUS_ERROR(logger, "log4cplus initialized");
  #endif
       }
     return _instance;
@@ -207,7 +207,7 @@ namespace CVC_NAMESPACE
       std::list<std::string> emptyProps;
       BOOST_FOREACH(data_map::value_type val, _data)
         if(val.first.empty() || val.second.empty()) 
-	  emptyProps.push_back(val.first);
+          emptyProps.push_back(val.first);
       BOOST_FOREACH(std::string key, emptyProps)
         _data.erase(key);
     
@@ -365,7 +365,7 @@ namespace CVC_NAMESPACE
       std::list<std::string> emptyProps;
       BOOST_FOREACH(property_map::value_type val, _properties)
         if(val.first.empty() || val.second.empty()) 
-	  emptyProps.push_back(val.first);
+          emptyProps.push_back(val.first);
       BOOST_FOREACH(std::string key, emptyProps)
         _properties.erase(key);
     }
@@ -433,8 +433,8 @@ namespace CVC_NAMESPACE
     
     for (int i=0; i<listProp.size(); i++) {
       if (val.compare(listProp[i]) == 0) {
-	// its already in the list... just return
-	return;
+        // its already in the list... just return
+        return;
       }
     }
     listProp.push_back(val);
@@ -448,10 +448,10 @@ namespace CVC_NAMESPACE
     bool found = false;
     for (int i=0; i<listProp.size(); i++) {
       if (val.compare(listProp[i]) == 0) {
-	listProp.erase(listProp.begin()+i);
-	// only erase one copy of this value...
-	found = true;
-	break;
+        listProp.erase(listProp.begin()+i);
+        // only erase one copy of this value...
+        found = true;
+        break;
       }
     }
     if (found) {
@@ -740,45 +740,45 @@ namespace CVC_NAMESPACE
       6;
     if(verbosity_level < log_verbosity)
       {
-	string output_locs = properties("system.log_output");
- 	string log_prefix = properties("system.log_prefix");
- 	string log_postfix = properties("system.log_postfix");
- 	string output_string = log_prefix+buf+log_postfix;
+        string output_locs = properties("system.log_output");
+        string log_prefix = properties("system.log_prefix");
+        string log_postfix = properties("system.log_postfix");
+        string output_string = log_prefix+buf+log_postfix;
 
- 	vector<string> key_idents;
- 	split(key_idents,output_locs,is_any_of(","));
- 	BOOST_FOREACH(string loc, key_idents)
- 	  {
- 	    trim(loc);
-	    if(loc == "stdout")
-	      {
-		cout<<output_string;
-		continue;
-	      }
- 	    else if(loc == "stderr" || loc.empty())
-	      {
-		cerr<<output_string;
-		continue;
-	      }
- 	    //check if loc is an std::string on the datamap
- 	    bool isDataKey = false;
- 	    std::vector<std::string> dataKeys = data<std::string>();
- 	    BOOST_FOREACH(std::string key, dataKeys)
- 	      if(loc == key) //if so, append buf to the log string
- 		{
- 		  data(key, data<std::string>(key) + output_string);
-		  isDataKey = true;
-		  break;
- 		}
+        vector<string> key_idents;
+        split(key_idents,output_locs,is_any_of(","));
+        BOOST_FOREACH(string loc, key_idents)
+          {
+            trim(loc);
+            if(loc == "stdout")
+              {
+                cout<<output_string;
+                continue;
+              }
+            else if(loc == "stderr" || loc.empty())
+              {
+                cerr<<output_string;
+                continue;
+              }
+            //check if loc is an std::string on the datamap
+            bool isDataKey = false;
+            std::vector<std::string> dataKeys = data<std::string>();
+            BOOST_FOREACH(std::string key, dataKeys)
+              if(loc == key) //if so, append buf to the log string
+                {
+                  data(key, data<std::string>(key) + output_string);
+                  isDataKey = true;
+                  break;
+                }
     
- 	    //if it was a data key, we're done
- 	    if(isDataKey) continue;
+            //if it was a data key, we're done
+            if(isDataKey) continue;
 
- 	    //if nothing else, interpret as a filename
-	    ofstream outfile(loc.c_str(),
-			     ios_base::out|ios_base::app);
-	    outfile<<output_string;
-	  }
+            //if nothing else, interpret as a filename
+            ofstream outfile(loc.c_str(),
+                             ios_base::out|ios_base::app);
+            outfile<<output_string;
+          }
       }
 #endif
   }

@@ -4,13 +4,13 @@
         Authors: Joe Rivera <transfix@ices.utexas.edu>
         Advisor: Chandrajit Bajaj <bajaj@cs.utexas.edu>
 
-  This file is part of libCVC.
+  This file is part of libcvc.
 
-  libCVC is free software; you can redistribute it and/or
+  libcvc is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License version 2.1 as published by the Free Software Foundation.
 
-  libCVC is distributed in the hope that it will be useful,
+  libcvc is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
@@ -19,8 +19,6 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
-/* $Id: State.cpp 5559 2012-05-11 21:43:22Z transfix $ */
 
 #include <cvc/state.h>
 #include <cvc/app.h>
@@ -96,8 +94,8 @@ namespace
   {
   public:
     notify_xmlrpc_thread(const std::string& threadName,
-			 const std::string& host, int port,
-			 const std::string& stateName)
+                         const std::string& host, int port,
+                         const std::string& stateName)
       : _threadName(threadName), _host(host), 
         _port(port), _stateName(stateName) {}
     
@@ -258,20 +256,20 @@ namespace
     }
   };
 
-#define XMLRPC_METHOD_PROTOTYPE(name, description)			\
-  class name : public XmlRpc::XmlRpcServerMethod			\
-  {									\
-  public:								\
-    name(XmlRpc::XmlRpcServer *s) :	          			\
-      XmlRpc::XmlRpcServerMethod(#name, s) {}	                        \
-    void execute(XmlRpc::XmlRpcValue &params,				\
-		 XmlRpc::XmlRpcValue &result);				\
-    std::string help() { return std::string(description); }		\
+#define XMLRPC_METHOD_PROTOTYPE(name, description)                      \
+  class name : public XmlRpc::XmlRpcServerMethod                        \
+  {                                                                     \
+  public:                                                               \
+    name(XmlRpc::XmlRpcServer *s) :                                     \
+      XmlRpc::XmlRpcServerMethod(#name, s) {}                           \
+    void execute(XmlRpc::XmlRpcValue &params,                           \
+                 XmlRpc::XmlRpcValue &result);                          \
+    std::string help() { return std::string(description); }             \
   };
 
-#define XMLRPC_METHOD_DEFINITION(name)                                  \
+#define XMLRPC_METHOD_DEFINITION(name)                                    \
   void xmlrpc_server_thread::name::execute(XmlRpc::XmlRpcValue &params,   \
-				           XmlRpc::XmlRpcValue &result)
+                                           XmlRpc::XmlRpcValue &result)
 
   // --------------------
   // xmlrpc_server_thread
@@ -282,7 +280,7 @@ namespace
   // 02/20/2012 -- Joe R. -- Initial implementation.
   // 02/24/2012 -- Joe R. -- Moving default initilization here to avoid deadlock
   // 03/02/2012 -- Joe R. -- Running a thread to sync up with other hosts.
-  // 03/10/2012 -- Joe R. -- Starting ProcessNotifyXmlRpcThreads.
+  // 03/10/2012 -- Joe R. -- Starting process_notify_xmlrpc_threads.
   class xmlrpc_server_thread
   {
   public:
@@ -307,7 +305,7 @@ namespace
         cvcstate("__system.xmlrpc.hosts")
           .value("localhost:23196") //loopback test for now
           .comment("Comma separated list of host:port combinations used to broadcast "
-                   "node changes via NotifyXmlRpcThread.");
+                   "node changes via notify_xmlrpc_thread.");
       if(cvcstate("__system.xmlrpc.notify_states").value().empty())
         cvcstate("__system.xmlrpc.notify_states")
           .comment("Comma separated list of nodes to broadcast notification for.");
