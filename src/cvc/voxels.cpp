@@ -81,7 +81,7 @@ namespace CVC_NAMESPACE
   // Purpose:
   //   Changes the dimensions of this voxels dataset.
   // ---- Change History ----
-  // ??/??/2007 -- Joe R. -- Initial implementation.
+  // ??/??/2007 -- Joe R. -- Creation.
   // 08/26/2011 -- Joe R. -- Added voxels argument
   void voxels::voxel_dimensions(const dimension& d, boost::shared_array<unsigned char> vox)
   {

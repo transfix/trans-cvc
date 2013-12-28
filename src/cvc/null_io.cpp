@@ -34,7 +34,7 @@ namespace CVC_NAMESPACE
   //   Template for IO functionality.  Copy this class and fill out the functions
   //   when adding support for a new file type.
   // ---- Change History ----
-  // 12/04/2009 -- Joe R. -- Initial implementation.
+  // 12/04/2009 -- Joe R. -- Creation.
   struct null_io : public volume_file_io
   {
     // ----------------
@@ -43,7 +43,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Initializes the extension list and id.
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     null_io()
       : _id("null_io : v1.0")
     {
@@ -57,7 +57,7 @@ namespace CVC_NAMESPACE
     //   Returns a string that identifies this volume_file_io object.  This should
     //   be unique, but is freeform.
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     virtual const std::string& id() const
     {
       return _id;
@@ -69,7 +69,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns a list of extensions that this volume_file_io object supports.
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     virtual const extension_list& extensions() const
     {
       return _extensions;
@@ -82,7 +82,7 @@ namespace CVC_NAMESPACE
     //   Writes to a structure containing all info that VolMagick needs
     //   from a volume file.
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     virtual void getVolumeFileInfo(volume_file_info::data& /*data*/,
 				   const std::string& /*filename*/) const
     {
@@ -99,7 +99,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Writes to a volume object after reading from a volume file.
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     virtual void readVolumeFile(volume& /*vol*/,
 				const std::string& /*filename*/, 
 				unsigned int /*var*/, unsigned int /*time*/,
@@ -119,7 +119,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Creates an empty volume file to be later filled in by writeVolumeFile
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     virtual void createVolumeFile(const std::string& /*filename*/,
 				  const bounding_box& /*boundingBox*/,
 				  const dimension& /*dimension*/,
@@ -145,7 +145,7 @@ namespace CVC_NAMESPACE
     //   If what you desire is to overwrite an existing volume file, first run
     //   createVolumeFile to replace the volume file.
     // ---- Change History ----
-    // 12/04/2009 -- Joe R. -- Initial implementation.
+    // 12/04/2009 -- Joe R. -- Creation.
     virtual void writeVolumeFile(const volume& /*wvol*/, 
 				 const std::string& /*filename*/,
 				 unsigned int /*var*/, unsigned int /*time*/,

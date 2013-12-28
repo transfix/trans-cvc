@@ -48,7 +48,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns a PredType given a VoxelType.
     // ---- Change History ----
-    // 12/31/2009 -- Joe R. -- Initial implementation.
+    // 12/31/2009 -- Joe R. -- Creation.
     // 06/24/2011 -- Joe R. -- Throwing an exception on error. 
     // 07/22/2011 -- Joe R. -- Adding Char.
     // 09/09/2011 -- Joe R. -- Adding Int and Int64.
@@ -79,7 +79,7 @@ namespace CVC_NAMESPACE
     //   Gets an H5File object for the provided filename, either creating or
     //   opening a file to do so.
     // ---- Change History ----
-    // 12/29/2009 -- Joe R. -- Initial implementation.
+    // 12/29/2009 -- Joe R. -- Creation.
     // 08/27/2010 -- Joe R. -- Simplifying logic and forcing TRUNC if create == true
     // 01/27/2012 -- Joe R. -- Allowing RDONLY access.
     // 04/06/2012 -- Joe R. -- Catching exception thrown from isHdf5.
@@ -123,7 +123,7 @@ namespace CVC_NAMESPACE
     //   Gets a Group object for the provided file and object path, either creating or
     //   opening groups along the way to do so.
     // ---- Change History ----
-    // 12/29/2009 -- Joe R. -- Initial implementation.
+    // 12/29/2009 -- Joe R. -- Creation.
     boost::shared_ptr<H5::Group> getGroup(const H5::H5File& file,
                                           const std::string& groupPath,
                                           bool create)
@@ -169,7 +169,7 @@ namespace CVC_NAMESPACE
     //   Gets a DataSet object for the provided file and object path, opening
     //   groups along the way.
     // ---- Change History ----
-    // 06/17/2011 -- Joe R. -- Initial implementation.
+    // 06/17/2011 -- Joe R. -- Creation.
     // 09/05/2011 -- Joe R. -- Fixed a bug preventing creation of dataset at root
     boost::shared_ptr<H5::DataSet> getDataSet(const H5::H5File& file,
                                               const std::string& dataSetPath,
@@ -233,7 +233,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //  Unlinks the object at the specified path.
     // ---- Change History ----
-    // 07/15/2011 -- Joe R. -- Initial implementation.    
+    // 07/15/2011 -- Joe R. -- Creation.    
     void unlink(const H5::H5File& file,
                 const std::string& objectPath)
     {
@@ -274,7 +274,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns true if object has named attribute
     // ---- Change History ----
-    // 12/29/2009 -- Joe R. -- Initial implementation.    
+    // 12/29/2009 -- Joe R. -- Creation.    
     bool hasAttribute(const H5::H5Object& obj,
                       const std::string& name)
     {
@@ -297,7 +297,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   testing for group in HDF5 file
     // ---- Change History ----
-    // 06/24/2011 -- Joe R. -- Initial implementation.
+    // 06/24/2011 -- Joe R. -- Creation.
     // 07/15/2011 -- Joe R. -- Using a mutex to protect file access
     bool isGroup(const std::string& hdf5_filename,
                  const std::string& hdf5_objname)
@@ -332,7 +332,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   testing for dataset in HDF5 file
     // ---- Change History ----
-    // 06/24/2011 -- Joe R. -- Initial implementation.
+    // 06/24/2011 -- Joe R. -- Creation.
     // 07/15/2011 -- Joe R. -- Using a mutex to protect file access
     bool isDataSet(const std::string& hdf5_filename,
                    const std::string& hdf5_objname)
@@ -368,7 +368,7 @@ namespace CVC_NAMESPACE
     //   Returns true of the specified object is a
     //   dataset or group in the specified hdf5 file.
     // ---- Change History ----
-    // 07/15/2011 -- Joe R. -- Initial implementation.
+    // 07/15/2011 -- Joe R. -- Creation.
     bool objectExists(const std::string& hdf5_filename,
                       const std::string& hdf5_objname)
     {
@@ -388,7 +388,7 @@ namespace CVC_NAMESPACE
     //   Removes the specified object from the HDF5
     //   file.
     // ---- Change History ----
-    // 07/15/2011 -- Joe R. -- Initial implementation.
+    // 07/15/2011 -- Joe R. -- Creation.
     // 09/02/2011 -- Joe R. -- Catching H5::Exception
     void removeObject(const std::string& hdf5_filename,
                       const std::string& hdf5_objname)
@@ -421,7 +421,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Creates a new HDF5 File.
     // ---- Change History ----
-    // 09/02/2011 -- Joe R. -- Initial implementation.
+    // 09/02/2011 -- Joe R. -- Creation.
     void createHDF5File(const std::string& hdf5_filename)
     {
       using namespace boost;
@@ -450,7 +450,7 @@ namespace CVC_NAMESPACE
     //   Creates a group, overwriting anything at the
     //   specified object path if necessary.
     // ---- Change History ----
-    // 07/15/2011 -- Joe R. -- Initial implementation.
+    // 07/15/2011 -- Joe R. -- Creation.
     // 08/28/2011 -- Joe R. -- Throwing an exception instead of using
     //                         boolean return values.
     // 09/02/2011 -- Joe R. -- Fixing bug where file was being truncated each call
@@ -497,7 +497,7 @@ namespace CVC_NAMESPACE
     //   Creates a dataset, overwriting anything at the
     //   specified object path if necessary.
     // ---- Change History ----
-    // 07/15/2011 -- Joe R. -- Initial implementation, adapted from VolMagick/HDF5_IO.cpp
+    // 07/15/2011 -- Joe R. -- Creation, adapted from VolMagick/HDF5_IO.cpp
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     // 08/28/2011 -- Joe R. -- Throwing exception instead of using boolean ret val
     // 09/02/2011 -- Joe R. -- Adding replace arg to allow for inline dataset obj replacement
@@ -826,7 +826,7 @@ namespace CVC_NAMESPACE
     //   Creates a string dataset and writes the specified
     //   string to it.
     // ---- Change History ----
-    // 07/22/2011 -- Joe R. -- Initial implementation.
+    // 07/22/2011 -- Joe R. -- Creation.
     // 08/28/2011 -- Joe R. -- Throwing exception instead of using boolean ret val
     void createDataSet(const std::string& hdf5_filename,
                        const std::string& hdf5_objname,
@@ -854,7 +854,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Read string dataset into string
     // ---- Change History ----
-    // 07/22/2011 -- Joe R. -- Initial implementation.
+    // 07/22/2011 -- Joe R. -- Creation.
     void readDataSet(const std::string& hdf5_filename,
                      const std::string& hdf5_objname,
                      std::string& value)
@@ -877,7 +877,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   write string dataset
     // ---- Change History ----
-    // 07/22/2011 -- Joe R. -- Initial implementation.
+    // 07/22/2011 -- Joe R. -- Creation.
     void writeDataSet(const std::string& hdf5_filename,
                       const std::string& hdf5_objname,
                       const std::string& value)
@@ -905,7 +905,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the dimension attributes of the HDF5 object
     // ---- Change History ----
-    // 07/17/2011 -- Joe R. -- Initial implementation.
+    // 07/17/2011 -- Joe R. -- Creation.
     // 08/05/2011 -- Joe R. -- Renamed and generalized for both datasets and groups.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     dimension getObjectDimension(const std::string& hdf5_filename,
@@ -933,7 +933,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Sets the dimensions of the specified object
     // ---- Change History ----
-    // 08/26/2011 -- Joe R. -- Initial implementation.
+    // 08/26/2011 -- Joe R. -- Creation.
     void setObjectDimension(const std::string& hdf5_filename,
                             const std::string& hdf5_objname,
                             const dimension& dim)
@@ -958,7 +958,7 @@ namespace CVC_NAMESPACE
     //   Returns the dimensions of a sub-dataset defined by the
     //   bounding box.
     // ---- Change History ----
-    // 09/04/2011 -- Joe R. -- Initial implementation.
+    // 09/04/2011 -- Joe R. -- Creation.
     dimension getDataSetDimensionForBoundingBox(const std::string& hdf5_filename,
                                                 const std::string& hdf5_objname,
                                                 const bounding_box& subvolbox)
@@ -997,7 +997,7 @@ namespace CVC_NAMESPACE
     //   Returns the dimensions of a sub-dataset/group defined by the
     //   bounding box.
     // ---- Change History ----
-    // 07/22/2011 -- Joe R. -- Initial implementation.
+    // 07/22/2011 -- Joe R. -- Creation.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     dimension getDataSetDimension(const std::string& hdf5_filename,
                                   const std::string& hdf5_objname,
@@ -1078,7 +1078,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the bounding box of the dataset
     // ---- Change History ----
-    // 07/17/2011 -- Joe R. -- Initial implementation.
+    // 07/17/2011 -- Joe R. -- Creation.
     // 08/05/2011 -- Joe R. -- Renamed and generalized for both datasets and groups.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     bounding_box getObjectBoundingBox(const std::string& hdf5_filename,
@@ -1109,7 +1109,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Sets the bounding box of the specified object
     // ---- Change History ----
-    // 08/26/2011 -- Joe R. -- Initial implementation.
+    // 08/26/2011 -- Joe R. -- Creation.
     void setObjectBoundingBox(const std::string& hdf5_filename,
                               const std::string& hdf5_objname,
                               const bounding_box& boundingBox)
@@ -1136,7 +1136,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the dataset type
     // ---- Change History ----
-    // 07/17/2011 -- Joe R. -- Initial implementation.
+    // 07/17/2011 -- Joe R. -- Creation.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     std::string getDataSetInfo(const std::string& hdf5_filename,
                                const std::string& hdf5_objname)
@@ -1161,7 +1161,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the type of the dataset
     // ---- Change History ----
-    // 07/17/2011 -- Joe R. -- Initial implementation.
+    // 07/17/2011 -- Joe R. -- Creation.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     data_type getDataSetType(const std::string& hdf5_filename,
                              const std::string& hdf5_objname)
@@ -1187,7 +1187,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Gets a list of child objects of the specified object.
     // ---- Change History ----
-    // 09/02/2011 -- Joe R. -- Initial implementation.
+    // 09/02/2011 -- Joe R. -- Creation.
     // 09/17/2011 -- Joe R. -- Adding filter parameter.  A string isn't added
     //                         to the list if the filter IS NOT in the string
     std::vector<std::string> getChildObjects(const std::string& hdf5_filename,
@@ -1248,7 +1248,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the minimum value of a dataset
     // ---- Change History ----
-    // 07/17/2011 -- Joe R. -- Initial implementation.
+    // 07/17/2011 -- Joe R. -- Creation.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     double getDataSetMinimum(const std::string& hdf5_filename,
                              const std::string& hdf5_objname)
@@ -1272,7 +1272,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the maximum value of a dataset
     // ---- Change History ----
-    // 07/17/2011 -- Joe R. -- Initial implementation.
+    // 07/17/2011 -- Joe R. -- Creation.
     // 08/26/2011 -- Joe R. -- Adding more detailed exception string
     double getDataSetMaximum(const std::string& hdf5_filename,
                              const std::string& hdf5_objname)

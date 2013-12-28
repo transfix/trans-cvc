@@ -127,7 +127,7 @@ namespace CVC_NAMESPACE
   //   thread.  This is needed because child threads might refence objects
   //   that are destroyed by the C++ runtime during exit().
   // ---- Change History ----
-  // 09/09/2011 -- Joe R. -- Initial implementation.
+  // 09/09/2011 -- Joe R. -- Creation.
   // 02/24/2012 -- Joe R. -- Moved to class App so we can support checking whether the main
   //                         thread has quit.
   void app::wait_for_threads()
@@ -459,7 +459,7 @@ namespace CVC_NAMESPACE
     }
   }
 
-  // 12/16/2011 -- transfix -- initial implementation
+  // 12/16/2011 -- transfix -- Creation.
   void app::propertyTreeTraverse(const boost::property_tree::ptree& pt,
                                  const std::string& parentkey)
   {
@@ -480,7 +480,7 @@ namespace CVC_NAMESPACE
       }
   }
 
-  // 12/16/2011 -- transfix -- initial implementation
+  // 12/16/2011 -- transfix -- Creation.
   void app::readPropertyMap(const std::string& path)
   {
     using namespace boost;
@@ -494,7 +494,7 @@ namespace CVC_NAMESPACE
     propertyTreeTraverse(pt);
   }
 
-  // 12/16/2011 -- transfix -- initial implementation
+  // 12/16/2011 -- transfix -- Creation.
   void app::writePropertyMap(const std::string& path)
   {
     using boost::property_tree::ptree;

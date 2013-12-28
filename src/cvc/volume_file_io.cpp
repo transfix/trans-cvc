@@ -67,7 +67,7 @@ namespace CVC_NAMESPACE
   //   Splits a filename into an actual file name and an object
   //   path.
   // ---- Change History ----
-  // 07/24/2011 -- Joe R. -- Initial implementation.
+  // 07/24/2011 -- Joe R. -- Creation.
   // 08/05/2011 -- Joe R. -- Using a '|' instead of ':'
   // 09/05/2011 -- Joe R. -- Moved here from HDF5_IO
   boost::tuple<
@@ -96,7 +96,7 @@ namespace CVC_NAMESPACE
   //   Same as above except uses a bounding box for specifying the
   //   subvol.  A default implementation is provided. 
   // ---- Change History ----
-  // 01/03/2010 -- Joe R. -- Initial implementation.
+  // 01/03/2010 -- Joe R. -- Creation.
   // 05/11/2010 -- Joe R. -- Fixing off-by-one indexing problem.
   void volume_file_io::readVolumeFile(volume& vol, 
 				     const std::string& filename, 
@@ -132,7 +132,7 @@ namespace CVC_NAMESPACE
   //   because it has to read the entire file.  This can be sped up on an individual file type
   //   basis.
   // ---- Change History ----
-  // 04/06/2012 -- Joe R. -- Initial implementation.
+  // 04/06/2012 -- Joe R. -- Creation.
   void volume_file_io::writeBoundingBox(const bounding_box& bbox, const std::string& filename) const
   {
     std::vector<volume> vols;
@@ -230,7 +230,7 @@ namespace CVC_NAMESPACE
   // Purpose:
   //   Returns the list of supported file extensions.
   // ---- Change History ----
-  // 09/18/2011 -- Joe R. -- Initial implementation.    
+  // 09/18/2011 -- Joe R. -- Creation.    
   std::vector<std::string> volume_file_io::getExtensions()
   {
     std::vector<std::string> ret;
@@ -588,7 +588,7 @@ namespace CVC_NAMESPACE
   //   Writes a collection of volumes to the specified file if the file type supports
   //   such an operation.
   // ---- Change History ----
-  // ??/??/2007 -- Joe R. -- Initial implementation.
+  // ??/??/2007 -- Joe R. -- Creation.
   void writeVolumeFile(const std::vector<volume>& vols,
 		       const std::string& filename)
   {

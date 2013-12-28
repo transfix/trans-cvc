@@ -85,7 +85,7 @@ namespace CVC_NAMESPACE
   //   Shortcut for creating a volume file based on a volume object.  Also
   //   writes the volume data in the object to the specified file.
   // ---- Change History ----
-  // 01/04/2010 -- Joe R. -- Initial implementation.
+  // 01/04/2010 -- Joe R. -- Creation.
   static inline void createVolumeFile(const volume& vol,
 				      const std::string& filename)
   {
@@ -103,7 +103,7 @@ namespace CVC_NAMESPACE
   //   Same as above, except with arguments in the order consistent with the full
   //   createVolumeFile call
   // ---- Change History ----
-  // 01/04/2010 -- Joe R. -- Initial implementation.
+  // 01/04/2010 -- Joe R. -- Creation.
   static inline void createVolumeFile(const std::string& filename,
 				      const volume& vol)
   {
@@ -131,7 +131,7 @@ namespace CVC_NAMESPACE
   //   Converts (or copies) volume from one file or filetype to another.  Basically
   //   the same as the VolUtils cmd line program.
   // ---- Change History ----
-  // 09/18/2011 -- Joe R. -- Initial implementation.
+  // 09/18/2011 -- Joe R. -- Creation.
   void volconvert(const std::string& input_volume_file,
                   const std::string& output_volume_file);
 }

@@ -52,7 +52,7 @@ namespace CVC_NAMESPACE
   //   messaging system.  With xmlrpc that messaging can extend to
   //   threads in other processes and nodes on the network.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   // 03/02/2012 -- Joe R. -- Added touch()
   // 03/15/2012 -- Joe R. -- Added initialized flag.
   // 03/16/2012 -- Joe R. -- Added reset(), ptree() and traverse()

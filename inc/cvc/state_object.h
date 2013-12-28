@@ -54,7 +54,7 @@ namespace CVC_NAMESPACE
   //   way.
   //
   // ---- Change History ----
-  // 05/27/2012 -- Joe R. -- Initial implementation.
+  // 05/27/2012 -- Joe R. -- Creation.
   template <class This> //This should be the type of the inheriting class
   class state_object
   {

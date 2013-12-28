@@ -11,6 +11,7 @@ set(SOURCE_FILES
   bilateral_filter.cpp
   contrast_enhancement.cpp
   gdtv_filter.cpp
+  mrc_io.cpp
   null_io.cpp
   rawiv_io.cpp
   rawv_io.cpp
@@ -62,6 +63,7 @@ if(CVC_USING_HDF5)
     )
     set(SOURCE_FILES
        ${SOURCE_FILES}
+       hdf5_io.cpp
        hdf5_utils.cpp
     )
 

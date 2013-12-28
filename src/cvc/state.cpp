@@ -57,7 +57,7 @@ namespace
   //   This function is kind of a hack way to get the default interface's
   //   local ip address.  From http://bit.ly/ADIcC1
   // ---- Change History ----
-  // 02/24/2012 -- Joe R. -- Initial implementation.
+  // 02/24/2012 -- Joe R. -- Creation.
   std::string getLocalIPAddress()
   {
     using namespace boost::asio;
@@ -88,7 +88,7 @@ namespace
   //   Sends the value of the state object specified in 'which'
   //   to the xmlrpc server running at host:port.
   // ---- Change History ----
-  // 02/20/2012 -- Joe R. -- Initial implementation.
+  // 02/20/2012 -- Joe R. -- Creation.
   // 03/09/2012 -- Joe R. -- Using stateName string instead of direct State ptr
   class notify_xmlrpc_thread
   {
@@ -152,7 +152,7 @@ namespace
   //   The initial thread spawned by a value change.  This will in turn
   //   spawn 1 thread for each host specified in __system.xmlrpc.hosts.
   // ---- Change History ----
-  // 02/20/2012 -- Joe R. -- Initial implementation.
+  // 02/20/2012 -- Joe R. -- Creation.
   // 03/09/2012 -- Joe R. -- Using stateName string instead of direct State ptr
   // 04/21/2012 -- Joe R. -- Instead of synching everyone, do it one way.
   class notify_xmlrpc_thread_setup
@@ -277,7 +277,7 @@ namespace
   // Purpose: 
   //   The thread that manages the XmlRpcServer instance.
   // ---- Change History ----
-  // 02/20/2012 -- Joe R. -- Initial implementation.
+  // 02/20/2012 -- Joe R. -- Creation.
   // 02/24/2012 -- Joe R. -- Moving default initilization here to avoid deadlock
   // 03/02/2012 -- Joe R. -- Running a thread to sync up with other hosts.
   // 03/10/2012 -- Joe R. -- Starting process_notify_xmlrpc_threads.
@@ -436,7 +436,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Constructor for a state object.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   // 02/20/2012 -- Joe R. -- Adding notifyXmlRpc slot.
   // 03/02/2012 -- Joe R. -- Setting last mod to minimum date by default.
   // 03/15/2012 -- Joe R. -- Added initialized flag.
@@ -470,7 +470,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Destructor.  Just signals that this object has been destroyed.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   state::~state()
   {
     destroyed();
@@ -484,7 +484,7 @@ namespace CVC_NAMESPACE
   //   stores the root state object on the cvcapp datamap, though this
   //   might not always be the case.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   state::state_ptr state::instancePtr()
   {
     boost::mutex::scoped_lock lock(_instanceMutex);
@@ -512,7 +512,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns a reference to the singleton root object.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   state& state::instance()
   {
     return *instancePtr();
@@ -524,7 +524,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the time this object was last modified.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   boost::posix_time::ptime state::lastMod()
   {
     boost::this_thread::interruption_point();
@@ -538,7 +538,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the string value of this object.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   std::string state::value()
   {
     boost::this_thread::interruption_point();
@@ -552,7 +552,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the type of the value as a string.
   // ---- Change History ----
-  // 03/31/2012 -- Joe R. -- Initial implementation.  
+  // 03/31/2012 -- Joe R. -- Creation.  
   std::string state::valueTypeName()
   {
     boost::this_thread::interruption_point();
@@ -566,7 +566,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the string comment for this object.
   // ---- Change History ----
-  // 03/30/2012 -- Joe R. -- Initial implementation.  
+  // 03/30/2012 -- Joe R. -- Creation.  
   std::string state::comment()
   {
     boost::this_thread::interruption_point();
@@ -580,7 +580,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Sets a comment for this state object, useful at runtime for the user.
   // ---- Change History ----
-  // 03/30/2012 -- Joe R. -- Initial implementation.  
+  // 03/30/2012 -- Joe R. -- Creation.  
   state& state::comment(const std::string& c)
   {
     boost::this_thread::interruption_point();
@@ -604,7 +604,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the hidden flag for this object.
   // ---- Change History ----
-  // 03/30/2012 -- Joe R. -- Initial implementation.  
+  // 03/30/2012 -- Joe R. -- Creation.  
   bool state::hidden()
   {
     boost::this_thread::interruption_point();
@@ -619,7 +619,7 @@ namespace CVC_NAMESPACE
   //   Sets a hidden flag for this state object, useful to hide internal API
   //   state objects that users shouldn't change.
   // ---- Change History ----
-  // 03/30/2012 -- Joe R. -- Initial implementation.  
+  // 03/30/2012 -- Joe R. -- Creation.  
   state& state::hidden(bool h)
   {
     boost::this_thread::interruption_point();
@@ -644,7 +644,7 @@ namespace CVC_NAMESPACE
   //   Returns a vector of strings if the value of the object
   //   is comma separated.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   std::vector<std::string> state::values(bool unique)
   {
     boost::this_thread::interruption_point();
@@ -679,7 +679,7 @@ namespace CVC_NAMESPACE
   //   Sets the value of this object.  Returns a reference to this
   //   to make it possible to add this to a chain of commands.   
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   // 03/15/2012 -- Joe R. -- Added initialized flag.
   state& state::value(const std::string& v, bool setValueType)
   {
@@ -707,7 +707,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Triggers signals as if this state obj changed.
   // ---- Change History ----
-  // 03/02/2012 -- Joe R. -- Initial implementation.
+  // 03/02/2012 -- Joe R. -- Creation.
   void state::touch()
   {
     boost::this_thread::interruption_point();
@@ -857,7 +857,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the data of this object.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.  
+  // 02/18/2012 -- Joe R. -- Creation.  
   boost::any state::data()
   {
     boost::this_thread::interruption_point();
@@ -871,7 +871,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Sets this object's data.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   // 03/15/2012 -- Joe R. -- Added initialized flag.
   // 04/20/2012 -- Joe R. -- Returning reference to this.
   state& state::data(const boost::any& d)
@@ -894,7 +894,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns a string representing the type of the data.
   // ---- Change History ----
-  // 03/31/2012 -- Joe R. -- Initial implementation.
+  // 03/31/2012 -- Joe R. -- Creation.
   std::string state::dataTypeName()
   {
     return cvcapp.dataTypeName(data());
@@ -906,7 +906,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Used for child object lookups.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   // 03/15/2012 -- Joe R. -- Added initialized flag.
   state& state::operator()(const std::string& childname)
   {
@@ -952,7 +952,7 @@ namespace CVC_NAMESPACE
   //   Returns a vector of children state object names. Filters children by
   //   a regular expression if regex isn't empty.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   // 02/24/2012 -- Joe R. -- Adding regex support.
   std::vector<std::string> state::children(const std::string& re)
   {
@@ -996,7 +996,7 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Returns the number of children.
   // ---- Change History ----
-  // 04/06/2012 -- Joe R. -- Initial implementation.
+  // 04/06/2012 -- Joe R. -- Creation.
   size_t state::numChildren()
   {
     boost::this_thread::interruption_point();
@@ -1012,7 +1012,7 @@ namespace CVC_NAMESPACE
   //   Because of this, every change to the entire tree will trigger the root node's
   //   childChanged signal.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   void state::notifyParent(const std::string& childname)
   {
     boost::this_thread::interruption_point();
@@ -1027,7 +1027,7 @@ namespace CVC_NAMESPACE
   //   in the __system.xmlrpc.hosts state object's value.  This spawns threads, so
   //   it will not block while the RPC call is being performed.
   // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Initial implementation.
+  // 02/18/2012 -- Joe R. -- Creation.
   // 02/20/2012 -- Joe R. -- Moved to its own thread to avoid possible deadlocks since
   //                          we don't yet have read/RW mutexes in use yet.
   void state::notifyXmlRpc()

@@ -73,7 +73,7 @@ namespace CVC_NAMESPACE
   //   UI objects such as the application's main window as well as regular data objects
   //   like Volumes and Geometry.
   // ---- Change History ----
-  // 01/30/2011 -- Joe R. -- Initial implementation.
+  // 01/30/2011 -- Joe R. -- Creation.
   // 02/06/2011 -- Joe R. -- Need to move the signal calls outside of the lock
   //                         scopes because it would cause deadlocks if slots
   //                         tried accessing the maps themselves.
@@ -250,7 +250,7 @@ namespace CVC_NAMESPACE
                                           bool uniqueElements = false);
 
     //Returns a collection of properties of type T.  Convenience function for above.
-    // 07/29/2011 - Joe. R. -- initial implementation
+    // 07/29/2011 - Joe. R. -- Creation.
     template<class T>
     std::vector<T> listProperty(const std::string& key,
                                 bool uniqueElements = false)
@@ -445,7 +445,7 @@ namespace CVC_NAMESPACE
     //   Specified mutex will be locked as long as this object
     //   is in scope.
     // ---- Change History ----
-    // 07/15/2011 -- Joe R. -- Initial implementation.
+    // 07/15/2011 -- Joe R. -- Creation.
     class scoped_lock
     {
     public:

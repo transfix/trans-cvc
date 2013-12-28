@@ -46,7 +46,7 @@ namespace CVC_NAMESPACE
   //   for any particular volume file format.  The default implementation
   //   does nothing.
   // ---- Change History ----
-  // 11/13/2009 -- Joe R. -- Initial implementation.
+  // 11/13/2009 -- Joe R. -- Creation.
   // 09/05/2011 -- Joe R. -- Moved splitRawFilename and 2 const strings here
   //                         from HDF5_IO.
   // 09/10/2011 -- Joe R. -- Just using char* and constructing regexes locally to avoid
@@ -64,7 +64,7 @@ namespace CVC_NAMESPACE
     //   Splits a filename into an actual file name and an object
     //   path.
     // ---- Change History ----
-    // 07/24/2011 -- Joe R. -- Initial implementation.
+    // 07/24/2011 -- Joe R. -- Creation.
     // 09/05/2011 -- Joe R. -- Moved here from HDF5_IO
     static boost::tuple<
       std::string, /* actual file name */
@@ -78,7 +78,7 @@ namespace CVC_NAMESPACE
     //   Returns a string that identifies this volume_file_io object.  This should
     //   be unique, but is freeform.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     virtual const std::string& id() const = 0;
 
     typedef std::list<std::string> extension_list;
@@ -89,7 +89,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns a list of extensions that this volume_file_io object supports.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     virtual const extension_list& extensions() const = 0;
 
     // ---------------------------------
@@ -99,7 +99,7 @@ namespace CVC_NAMESPACE
     //   Writes to a structure containing all info that VolMagick needs
     //   from a volume file.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     virtual void getVolumeFileInfo(volume_file_info::data& /*data*/,
 				   const std::string& /*filename*/) const = 0;
 
@@ -109,7 +109,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Writes to a Volume object after reading from a volume file.  
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     virtual void readVolumeFile(volume& /*vol*/, 
 				const std::string& /*filename*/, 
 				unsigned int /*var*/,
@@ -126,7 +126,7 @@ namespace CVC_NAMESPACE
     //   Same as above except uses a bounding box for specifying the
     //   subvol.  A default implementation is provided. 
     // ---- Change History ----
-    // 01/03/2010 -- Joe R. -- Initial implementation.
+    // 01/03/2010 -- Joe R. -- Creation.
     virtual void readVolumeFile(volume& vol, 
 				const std::string& filename, 
 				unsigned int var,
@@ -139,7 +139,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Creates an empty volume file to be later filled in by writeVolumeFile
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     virtual void createVolumeFile(const std::string& /*filename*/,
 				  const bounding_box& /*boundingBox*/,
 				  const dimension& /*dimension*/,
@@ -160,7 +160,7 @@ namespace CVC_NAMESPACE
     //   If what you desire is to overwrite an existing volume file, first run
     //   createVolumeFile to replace the volume file.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     virtual void writeVolumeFile(const volume& /*wvol*/, 
 				 const std::string& /*filename*/,
 				 unsigned int /*var*/,
@@ -177,7 +177,7 @@ namespace CVC_NAMESPACE
     //   because it has to read the entire file.  This can be sped up on an individual file type
     //   basis.
     // ---- Change History ----
-    // 04/06/2012 -- Joe R. -- Initial implementation.
+    // 04/06/2012 -- Joe R. -- Creation.
     virtual void writeBoundingBox(const bounding_box& bbox, const std::string& filename) const;
 
     typedef boost::shared_ptr<volume_file_io> ptr;
@@ -194,7 +194,7 @@ namespace CVC_NAMESPACE
     //   to add themselves to the collection of objects that are to be used
     //   to perform volume file i/o operations.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     static handler_map& handlerMap();
 
     // -----------------------------
@@ -203,7 +203,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Convenience function for adding objects to the map.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     static void insertHandler(const ptr& vfio);
 
     // -----------------------------
@@ -212,7 +212,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Convenience function for removing objects from the map.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     static void removeHandler(const ptr& vfio);
 
     // -----------------------------
@@ -221,7 +221,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Convenience function for removing objects from the map.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     static void removeHandler(const std::string& name);
 
     // -----------------------------
@@ -230,7 +230,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Returns the list of supported file extensions.
     // ---- Change History ----
-    // 09/18/2011 -- Joe R. -- Initial implementation.    
+    // 09/18/2011 -- Joe R. -- Creation.    
     static std::vector<std::string> getExtensions();
 
   private:
@@ -240,7 +240,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Adds the standard volume_file_io objects to a new handler_map object
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     static handler_map *initializeMap();
 
     // -----------------------------
@@ -249,7 +249,7 @@ namespace CVC_NAMESPACE
     // Purpose:
     //   Convenience function for adding objects to the specified map.
     // ---- Change History ----
-    // 11/13/2009 -- Joe R. -- Initial implementation.
+    // 11/13/2009 -- Joe R. -- Creation.
     static void insertHandler(handler_map& hm, const ptr& vfio);
   };
 
