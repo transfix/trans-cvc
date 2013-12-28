@@ -13,6 +13,7 @@ set(SOURCE_FILES
   gdtv_filter.cpp
   null_io.cpp
   rawiv_io.cpp
+  rawv_io.cpp
   state.cpp
   utility.cpp
   voxels.cpp

@@ -22,7 +22,7 @@ if(CMAKE_SYSTEM_NAME MATCHES ".*BSD")
   add_definitions(-D__BSD__)
 endif(CMAKE_SYSTEM_NAME MATCHES ".*BSD")
 
-add_library(xmlrpc SHARED ${SOURCE_FILES} ${INCLUDE_FILES})
+add_library(xmlrpc STATIC ${SOURCE_FILES} ${INCLUDE_FILES})
 
 #Windows requires wsock32
 if(WIN32)
