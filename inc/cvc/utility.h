@@ -28,6 +28,8 @@
 
 #include <cvc/upToPowerOfTwo.h>
 
+#include <cmath>
+
 namespace CVC_NAMESPACE
 {
   // arand: the mac doesn't like VERSION... so I changed it to VM_VERSION
@@ -134,6 +136,46 @@ namespace CVC_NAMESPACE
   // 09/18/2011 -- Joe R. -- Creation.
   void volconvert(const std::string& input_volume_file,
                   const std::string& output_volume_file);
+
+
+  /*
+   * Some typical vector math utility functions:
+   *  cross, dot, normalize
+   *
+   * Change Log:
+   * 04/02/2010 - Moved this code into it's own header from cvcraw_geometry.h
+   */
+  template <class Vector_3>
+    void cross(Vector_3& dest, const Vector_3& v1, const Vector_3& v2)
+    {
+      dest[0] = v1[1]*v2[2] - v1[2]*v2[1];
+      dest[1] = v1[2]*v2[0] - v1[0]*v2[2];
+      dest[2] = v1[0]*v2[1] - v1[1]*v2[0];
+    }
+  
+  template <class Vector_3>
+    double dot(const Vector_3& v1, const Vector_3& v2)
+    {
+      return v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
+    }
+  
+  template <class Vector_3>
+    void normalize(Vector_3& v)
+    {
+      double len = sqrt(static_cast<double>(v[0] * v[0] +
+					    v[1] * v[1] +
+					    v[2] * v[2]));
+      if (len!=0.0)
+	{
+	  v[0]/=len;
+	  v[1]/=len;
+	  v[2]/=len;
+	}
+      else 
+	{
+          v[0] = 1.0;
+        }
+    }
 }
 
 #endif

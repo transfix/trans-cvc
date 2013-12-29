@@ -11,6 +11,7 @@ set(SOURCE_FILES
   bilateral_filter.cpp
   contrast_enhancement.cpp
   gdtv_filter.cpp
+  geometry.cpp
   mrc_io.cpp
   null_io.cpp
   rawiv_io.cpp
@@ -131,6 +132,23 @@ if(CVC_APP_XML_PROPERTY_MAP)
   add_definitions(-DCVC_APP_XML_PROPERTY_MAP)
 endif(CVC_APP_XML_PROPERTY_MAP)
 mark_as_advanced(CVC_APP_XML_PROPERTY_MAP)
+
+option(CVC_GEOMETRY_ENABLE_BUNNY "Enable built-in bunny geometry test tri mesh" ON)
+if(CVC_GEOMETRY_ENABLE_BUNNY)
+  add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
+endif(CVC_GEOMETRY_ENABLE_BUNNY)
+
+if(NOT DISABLE_CGAL)
+  find_package(CGAL)
+  if(CGAL_FOUND)
+    include(${CGAL_USE_FILE})
+    # need the following flags in case CGAL has some special compiler needs for this compiler
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGAL_CXX_FLAGS_INIT}")
+    set(LIBS ${LIBS} ${CGAL_LIBRARIES})
+    add_definitions(-DCVC_GEOMETRY_ENABLE_PROJECT)
+    set(INCLUDE_FILES ${INCLUDE_FILES} ../../inc/cvc/project_verts.h)
+  endif(CGAL_FOUND)
+endif(NOT DISABLE_CGAL)
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/cvc/config.h.cmake ${CMAKE_BINARY_DIR}/inc/cvc/config.h )
 
