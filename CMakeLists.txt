@@ -13,12 +13,12 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 
 # The version number.
-set(transcvc_VERSION_MAJOR 2)
+set(transcvc_VERSION_MAJOR 1)
 set(transcvc_VERSION_MINOR 0)
 
 # The full version string
 set(transcvc_VERSION ${transcvc_VERSION_MAJOR}.${transcvc_VERSION_MINOR})
-message(STATUS "transcvc version: ${transcvc_VERSION}")
+message(STATUS "trans-cvc version: ${transcvc_VERSION}")
 
 # include macros for setting up some library dependencies
 #include( SetupQt )

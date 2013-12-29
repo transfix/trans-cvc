@@ -26,12 +26,32 @@
 #include <cvc/volume_file_info.h>
 #include <cvc/volume_file_io.h>
 
-#include <cvc/upToPowerOfTwo.h>
-
 #include <cmath>
 
 namespace CVC_NAMESPACE
 {
+  static inline unsigned int upToPowerOfTwo(unsigned int value)
+    {
+      unsigned int c = 0;
+      unsigned int v = value;
+
+      // round down to nearest power of two 
+      while (v>1) {
+        v = v>>1;
+        c++;
+      }
+
+      // if that isn't exactly the original value 
+      if ((v<<c)!=value) {
+        // return the next power of two 
+        return (v<<(c+1));
+      }
+      else {
+        // return this power of two 
+        return (v<<c);
+      }
+    }
+
   // arand: the mac doesn't like VERSION... so I changed it to VM_VERSION
   //        also, I moved this to the header... I have no idea why this was working
   //        in the .cpp file but the mac was complaining
@@ -176,6 +196,16 @@ namespace CVC_NAMESPACE
           v[0] = 1.0;
         }
     }
+
+  // ----------
+  // 
+  // ----------
+  // Purpose: 
+  //   Converts (or copies) volume from one file or filetype to another.  Basically
+  //   the same as the VolUtils cmd line program.
+  // ---- Change History ----
+  // ??/??/2005 -- ?? -- Creation.
+  
 }
 
 #endif

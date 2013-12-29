@@ -23,7 +23,7 @@
 
 #include <cvc/volmagick.h>
 #include <cvc/endians.h>
-#include <cvc/upToPowerOfTwo.h>
+#include <cvc/utility.h>
 #include <cvc/hdf5_utils.h>
 
 #if defined(WIN32)

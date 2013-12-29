@@ -48,7 +48,7 @@
 #define FSEEK fseeko
 #endif
 
-namespace CVC_NAMESPACE
+namespace
 {
 #define LINE_LENGTH 256
   typedef float FLOAT; // doubles are supported by VTK format, but here we just want to read as float.
@@ -94,7 +94,7 @@ namespace CVC_NAMESPACE
       {
 	geterrstr(errno,buf,256);
 	string errStr = "Error opening file '" + string(filename) + "': " + string(buf);
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
 
     char version[LINE_LENGTH];
@@ -123,7 +123,7 @@ namespace CVC_NAMESPACE
       {
 	string errStr = "Error reading file '" + string(filename) + "': Only binary .vtk files are supported.";
 	fclose(fd);
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
 
     char _type[256];
@@ -132,7 +132,7 @@ namespace CVC_NAMESPACE
       {
 	string errStr = "Error reading file '" + string(filename) + "': Only structured points are supported.";
 	fclose(fd); 
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
 
     char _dimstr[256];
@@ -141,7 +141,7 @@ namespace CVC_NAMESPACE
       {
 	string errStr = "Error reading file '" + string(filename) + "': Corrupt header for dimension.";
 	fclose(fd);
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
 
     di.volumeCovered  = coverVolume;
@@ -166,7 +166,7 @@ namespace CVC_NAMESPACE
       {
 	string errStr = "Error reading file '" + string(filename) + "': Corrupt header for data type.";
 	fclose(fd);
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
   
     char _datastr[256], _dataname[256];
@@ -176,7 +176,7 @@ namespace CVC_NAMESPACE
 	string errStr = "Error reading file '" + 
 	  string(filename) + "': Only scalar data of type \"image_data\" of type \"unsigned_short\" is supported.";
 	fclose(fd); 
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       } 
 
     fprintf(stderr, "\nInput volume size:  %d x %d x %d, %s\n", di.n_input[0], di.n_input[1], di.n_input[2], di.dataType);
@@ -208,7 +208,7 @@ namespace CVC_NAMESPACE
 	string errStr = "Error reading file '" + 
 	  string(filename) + "': Only 16 bit unsignd integers are supported at the moment.";
 	fclose(fd);
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
 
     FLOAT* dataPtr = (FLOAT*)calloc(nMem, sizeof(FLOAT)); // initialize mem to zero - so that padded part is set to zero!
@@ -218,7 +218,7 @@ namespace CVC_NAMESPACE
 			  % string(filename)
 			  % (nMem*sizeof(FLOAT))));
 	fclose(fd); 
-	throw read_error(errStr);
+	throw CVC_NAMESPACE::read_error(errStr);
       }
 
     unsigned short dataVal;
@@ -234,11 +234,11 @@ namespace CVC_NAMESPACE
 		  string(filename) + "': Insufficient elements in the file.";
 		free(dataPtr);
 		fclose(fd);
-		throw read_error(errStr);
+		throw CVC_NAMESPACE::read_error(errStr);
 	      }  
 	    fread(&dataVal, byte_size, 1, fd);
 	    //dataVal = ntohs(dataVal);
-	    if(!big_endian())
+	    if(!CVC_NAMESPACE::big_endian())
 	      SWAP_16(&dataVal);
 	    ptr = coverVolume?(dataPtr + _r + 1 + (_c + 1)*di.n[0] + (_d + 1)*di.n[0]*di.n[1]):(dataPtr + _r + _c*di.n[0] + _d*di.n[0]*di.n[1]);
 	    *ptr = (FLOAT)(dataVal);
@@ -270,7 +270,7 @@ namespace CVC_NAMESPACE
       {
 	geterrstr(errno,buf,256);
 	string errStr = "Error opening file '" + string(filename) + "': " + string(buf);
-	throw write_error(errStr);
+	throw CVC_NAMESPACE::write_error(errStr);
       }
     char str[256];
     unsigned long nMem = di.n[0]*di.n[1]*di.n[2];
@@ -308,7 +308,7 @@ namespace CVC_NAMESPACE
         //dataval = (unsigned short)(round(datavalf));
         dataval = (unsigned short)(floor(datavalf+0.5));
 	    //dataval = htons(dataval);
-	    if(!big_endian())
+	    if(!CVC_NAMESPACE::big_endian())
 	      SWAP_16(&dataval);
 	    if(fwrite(&dataval, sizeof(unsigned short), 1, fd)!=1)
 	      {
@@ -316,13 +316,16 @@ namespace CVC_NAMESPACE
 		std::string errStr = "Error writing volume data to file '" + 
 		  string(filename) + "': " + buf;
 		fclose(fd);
-		throw write_error(errStr);
+		throw CVC_NAMESPACE::write_error(errStr);
 	      }
 	  }
     fclose(fd);
     fprintf(stderr, "Done\n");
   }
+}
 
+namespace CVC_NAMESPACE
+{
   // ------
   // vtk_io
   // ------
@@ -417,7 +420,7 @@ namespace CVC_NAMESPACE
 				  double /*min_time*/, double /*max_time*/) const
     {
       thread_info ti(BOOST_CURRENT_FUNCTION);
-      throw write_error("Writing VTK files doesn't work yet!");
+      throw CVC_NAMESPACE::write_error("Writing VTK files doesn't work yet!");
     }
 
     // -----------------------
@@ -438,7 +441,7 @@ namespace CVC_NAMESPACE
 				 uint64 /*off_x*/, uint64 /*off_y*/, uint64 /*off_z*/) const
     {
       thread_info ti(BOOST_CURRENT_FUNCTION);
-      throw write_error("Writing VTK files doesn't work yet!");
+      throw CVC_NAMESPACE::write_error("Writing VTK files doesn't work yet!");
     }
 
   protected:

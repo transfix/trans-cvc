@@ -6,6 +6,7 @@ endif(WIN32)
 
 file(GLOB INCLUDE_FILES ../../inc/cvc/*.[Hh])
 set(SOURCE_FILES
+  algorithm.cpp
   anisotropic_diffusion.cpp
   app.cpp
   bilateral_filter.cpp
@@ -45,10 +46,12 @@ message(STATUS "libcvc version: ${CVC_VERSION}")
 
 add_definitions(-DCVC_VERSION_STRING=\"${CVC_VERSION}\")
 
-set(CVC_LINK_LIBS "")
-option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" OFF)
+add_definitions(-DCVC_USING_SDFLIB)
+set(CVC_LINK_LIBS sign_distance_function)
+
+option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" ON)
 if(CVC_USING_XMLRPC)
-  set(CVC_LINK_LIBS xmlrpc)
+  set(CVC_LINK_LIBS ${CVC_LINK_LIBS} xmlrpc)
   add_definitions(-DUSING_XMLRPC)
 endif(CVC_USING_XMLRPC)
 
