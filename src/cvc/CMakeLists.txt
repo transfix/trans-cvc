@@ -149,7 +149,12 @@ if(NOT DISABLE_CGAL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGAL_CXX_FLAGS_INIT}")
     set(LIBS ${LIBS} ${CGAL_LIBRARIES})
     add_definitions(-DCVC_GEOMETRY_ENABLE_PROJECT)
-    set(INCLUDE_FILES ${INCLUDE_FILES} ../../inc/cvc/project_verts.h)
+    set(INCLUDE_FILES 
+        ${INCLUDE_FILES} 
+	../../inc/cvc/project_verts.h)
+    
+    add_definitions(-DCVC_USING_MULTI_SDF)
+    set(CVC_LINK_LIBS multi_sdf)
   endif(CGAL_FOUND)
 endif(NOT DISABLE_CGAL)
 

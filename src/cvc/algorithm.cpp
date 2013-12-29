@@ -24,7 +24,11 @@
 #include <cvc/utility.h>
 
 #ifdef CVC_USING_MULTI_SDF
-#include <multi_sdf/multi_sdf.h>
+#include <multi_sdf/mesh_io.h>
+#include <multi_sdf/sdf.h>
+#include <multi_sdf/kdtree.h>
+#include <multi_sdf/matrix.h>
+#include <multi_sdf/dt.h>
 #endif
 
 #ifdef CVC_USING_SDFLIB
@@ -131,6 +135,133 @@ namespace
     return vol;
   }
 #endif
+
+#ifdef CVC_USING_MULTI_SDF
+  CVC_NAMESPACE::volume multi_sdf_library(const CVC_NAMESPACE::geometry& geom,
+					  const CVC_NAMESPACE::dimension& dim,
+					  const CVC_NAMESPACE::bounding_box& bbox)
+  {
+    using namespace CVC_NAMESPACE;
+    using namespace multi_sdf;
+
+    int dimx = dim[0], dimy = dim[1], dimz = dim[2];
+
+    Mesh mesh;
+    cerr << "Reading input mesh ";
+
+    //TODO: avoid this copy
+    int nverts = geom.num_points();
+    boost::scoped_array<float> verts(new float[nverts*3]);
+    for(int i = 0; i < nverts; i++)
+      {
+	verts[i*3+0] = geom.const_points()[i][0];
+	verts[i*3+1] = geom.const_points()[i][1];
+	verts[i*3+2] = geom.const_points()[i][2];
+      }
+
+    boost::scoped_array<float> colors(new float[nverts*3]);
+    for(int i = 0; i < nverts; i++)
+      {
+	colors[i*3+0] = geom.const_colors()[i][0];
+	colors[i*3+1] = geom.const_colors()[i][1];
+	colors[i*3+2] = geom.const_colors()[i][2];
+      }
+
+    int ntris = geom.num_tris();
+    boost::scoped_array<int> tris(new int[ntris*3]);
+    for(int i = 0; i < ntris; i++)
+      {
+	tris[i*3+0] = geom.const_tris()[i][0];
+	tris[i*3+1] = geom.const_tris()[i][1];
+	tris[i*3+2] = geom.const_tris()[i][2];
+      }
+
+    read_labeled_mesh(mesh,
+		      nverts, verts.get(), colors.get(), ntris, tris.get());
+    cerr << "done." << endl;
+
+    // build a bounding box around the input and store the
+    // origin, span etc.
+    //  vector<double> bbox;
+    //  construct_bbox(mesh, bbox);
+    bounding_box box(bbox);
+    if(box.isNull())
+      {
+	float mins[3], maxs[3];
+	point_t geom_min = geom.min_point();
+	point_t geom_max = geom.max_point();
+
+	box[0] = geom_min[0];
+	box[1] = geom_min[1];
+	box[2] = geom_min[2];
+	box[3] = geom_max[0];
+	box[4] = geom_max[1];
+	box[5] = geom_max[2];
+      }
+
+    // construct a kd-tree of all the non-isolated mesh_vertices.
+    vector<VECTOR3> points;
+    vector<Point> pts;
+    for(int i = 0; i < mesh.get_nv(); i ++)
+      {
+	if( mesh.vert_list[i].iso() ) continue;
+	Point p = mesh.vert_list[i].point();
+	pts.push_back(p);
+	points.push_back(VECTOR3(CGAL::to_double(p.x()),
+				 CGAL::to_double(p.y()),
+				 CGAL::to_double(p.z())));
+      }
+    KdTree kd_tree(points, 20);
+    kd_tree.setNOfNeighbours(1);
+
+    // Now perform a reconstruction to build a tetrahedralized solid
+    // with in-out marked.
+    Triangulation triang;
+    recon(pts, triang);
+
+    // assign weight to each triangle.
+    vector<double> weights;
+    // assign_sdf_weight(mesh, weights); // comment out for uniform weight.
+
+    volume vol;
+
+    cerr << "SDF " << endl;
+    try
+      {
+	vol.voxel_dimensions(dimension(dimx,dimy,dimz));
+	vol.voxelType(Float);
+	vol.boundingBox(box);
+
+	for(unsigned int k=0; k<vol.ZDim(); k++)
+	  {
+	    for(unsigned int j=0; j<vol.YDim(); j++)
+	      {
+		for(unsigned int i=0; i<vol.XDim(); i++)
+		  {
+		    double x = vol.XMin() + i*vol.XSpan();
+		    double y = vol.YMin() + j*vol.YSpan();
+		    double z = vol.ZMin() + k*vol.ZSpan();
+		    double fn_val = sdf(Point(x,y,z), mesh, weights, kd_tree, triang);
+		    vol(i,j,k, fn_val);
+		  }
+	      }
+	    fprintf(stderr,
+		    "%5.2f %%\r",
+		    (float(k)/float(vol.ZDim()-1))*100.0);
+	  }
+
+	vol.desc("multi_sdf");
+      }
+    catch(std::exception &e)
+      {
+	cerr << e.what() << endl;
+      }
+
+    cerr << endl << "done." << endl;
+
+    return vol;
+  }  
+#endif
 }
 
 namespace CVC_NAMESPACE
@@ -146,7 +277,7 @@ namespace CVC_NAMESPACE
       {
       case MULTI_SDF:
 #ifdef CVC_USING_MULTI_SDF
-        vol = multi_sdf::signedDistanceFunction(boost::shared_ptr<Geometry>(new Geometry(convert(geom))),dim,bbox);
+        vol = multi_sdf_library(geom,dim,bbox);
         vol.desc("Signed Distance Function - multi_sdf");
 #else
         throw unsupported_exception("multi_sdf unsupported");
