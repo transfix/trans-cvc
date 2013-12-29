@@ -15,12 +15,14 @@ set(SOURCE_FILES
   null_io.cpp
   rawiv_io.cpp
   rawv_io.cpp
+  spider_io.cpp
   state.cpp
   utility.cpp
   voxels.cpp
   volume.cpp
   volume_file_io.cpp
   volume_file_info.cpp
+  vtk_io.cpp
 )
 
 include_directories(
@@ -77,6 +79,36 @@ if(CVC_USING_HDF5)
 else(CVC_USING_HDF5)
   set(CVC_HDF5_DISABLED TRUE)
 endif(CVC_USING_HDF5)
+
+option(CVC_USING_IMOD_MRC "Add support for using imod's MRC loading routines." OFF)
+mark_as_advanced(CVC_USING_IMOD_MRC)
+if(CVC_USING_IMOD_MRC)
+  add_definitions(-DNOTIFFLIBS -DCVC_USING_IMOD_MRC)
+  include_directories(libiimod)
+  file(GLOB IMOD_MRC_LIBIIMOD_HEADERS libiimod/*.h)
+  set(INCLUDE_FILES
+     ${INCLUDE_FILES}
+     ${IMOD_MRC_LIBIIMOD_HEADERS}
+  )
+  set(SOURCE_FILES
+     ${SOURCE_FILES}
+     libiimod/b3dutil.c
+     libiimod/diffusion.c
+     libiimod/iilikemrc.c
+     libiimod/iimage.c
+     libiimod/iimrc.c
+     libiimod/iitif.c
+     libiimod/ilist.c
+     libiimod/mrcfiles.c
+     libiimod/mrcsec.c
+     libiimod/mrcslice.c
+     libiimod/plist.c
+     libiimod/sliceproc.c
+     libiimod/tiffstub.c
+     libiimod/islice.c
+     libiimod/parallelwrite.c
+  )
+endif(CVC_USING_IMOD_MRC)
 
 option(CVC_LOG4CPLUS_DEFAULT "Use log4cplus output by default" OFF)
 mark_as_advanced(CVC_LOG4CPLUS_DEFAULT)
