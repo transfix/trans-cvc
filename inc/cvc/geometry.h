@@ -61,7 +61,7 @@ namespace CVC_NAMESPACE
     typedef std::vector<vector_t>          normals_t;
     typedef std::vector<color_t>           colors_t;
     typedef std::vector<line_t>            lines_t;
-    typedef std::vector<tri_t>        tris_t;
+    typedef std::vector<tri_t>             tris_t;
     typedef std::vector<quad_t>            quads_t;
 
     typedef boost::shared_ptr<points_t>    points_ptr_t;
@@ -154,6 +154,9 @@ namespace CVC_NAMESPACE
 
     //Projects boundary vertices of this geometry to the input geometry
     geometry& project(const geometry &input);
+
+    //sangmin park's smoothing method
+    geometry& smoothing(float delta = 0.1f, bool fix_boundary = false);
 
   protected:
     void init_ptrs();

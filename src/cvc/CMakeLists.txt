@@ -17,6 +17,7 @@ set(SOURCE_FILES
   null_io.cpp
   rawiv_io.cpp
   rawv_io.cpp
+  smoothing.cpp
   spider_io.cpp
   state.cpp
   utility.cpp
@@ -153,6 +154,7 @@ if(NOT DISABLE_CGAL)
         ${INCLUDE_FILES} 
 	../../inc/cvc/project_verts.h)
     
+    add_definitions(-DCVC_GEOMETRY_ENABLE_PROJECT)
     add_definitions(-DCVC_USING_MULTI_SDF)
     set(CVC_LINK_LIBS multi_sdf)
   endif(CGAL_FOUND)
