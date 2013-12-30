@@ -25,6 +25,7 @@
 
 #include <cvc/volume_file_info.h>
 #include <cvc/volume_file_io.h>
+#include <cvc/geometry.h>
 
 #include <cmath>
 
@@ -196,16 +197,6 @@ namespace CVC_NAMESPACE
           v[0] = 1.0;
         }
     }
-
-  // ----------
-  // 
-  // ----------
-  // Purpose: 
-  //   Converts (or copies) volume from one file or filetype to another.  Basically
-  //   the same as the VolUtils cmd line program.
-  // ---- Change History ----
-  // ??/??/2005 -- ?? -- Creation.
-  
 }
 
 #endif

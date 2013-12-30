@@ -22,6 +22,7 @@
 
 #include <cvc/algorithm.h>
 #include <cvc/utility.h>
+#include <cvc/app.h>
 
 #ifdef CVC_USING_MULTI_SDF
 #include <multi_sdf/mesh_io.h>
@@ -34,6 +35,8 @@
 #ifdef CVC_USING_SDFLIB
 #include <sign_distance_function/sdfLib.h>
 #endif
+
+#include <fast_contouring/FastContouring.h>
 
 #include <iostream>
 #include <cstring>
@@ -49,6 +52,7 @@ namespace
 				    const CVC_NAMESPACE::bounding_box& bbox)
   {
     using namespace CVC_NAMESPACE;
+    thread_info ti(BOOST_CURRENT_FUNCTION);
 
     int size;
     int flipNormals = 0;
@@ -143,11 +147,12 @@ namespace
   {
     using namespace CVC_NAMESPACE;
     using namespace multi_sdf;
+    thread_info ti(BOOST_CURRENT_FUNCTION);
 
     int dimx = dim[0], dimy = dim[1], dimz = dim[2];
 
     Mesh mesh;
-    cerr << "Reading input mesh ";
+    cvcapp.log(3,"Reading input mesh");
 
     //TODO: avoid this copy
     int nverts = geom.num_points();
@@ -178,7 +183,7 @@ namespace
 
     read_labeled_mesh(mesh,
 		      nverts, verts.get(), colors.get(), ntris, tris.get());
-    cerr << "done." << endl;
+    cvcapp.log(3,"done.");
 
     // build a bounding box around the input and store the
     // origin, span etc.
@@ -225,7 +230,7 @@ namespace
 
     volume vol;
 
-    cerr << "SDF " << endl;
+    cvcapp.log(3,"SDF");
     try
       {
 	vol.voxel_dimensions(dimension(dimx,dimy,dimz));
@@ -245,9 +250,7 @@ namespace
 		    vol(i,j,k, fn_val);
 		  }
 	      }
-	    fprintf(stderr,
-		    "%5.2f %%\r",
-		    (float(k)/float(vol.ZDim()-1))*100.0);
+	    cvcapp.threadProgress(float(k)/float(vol.ZDim()-1));
 	  }
 
 	vol.desc("multi_sdf");
@@ -256,12 +259,34 @@ namespace
       {
 	cerr << e.what() << endl;
       }
-
-    cerr << endl << "done." << endl;
-
+    cvcapp.log(3,"done.");
+    
     return vol;
   }  
 #endif
+
+  CVC_NAMESPACE::geometry convert(const FastContouring::TriSurf& geo)
+  {
+    using namespace std;
+    CVC_NAMESPACE::geometry ret_geom;
+    ret_geom.points().resize(geo.verts.size()/3);
+    memcpy(&(ret_geom.points()[0]),
+           &(geo.verts[0]),
+           geo.verts.size()*sizeof(double));
+    ret_geom.normals().resize(geo.normals.size()/3);
+    memcpy(&(ret_geom.normals()[0]),
+           &(geo.normals[0]),
+           geo.normals.size()*sizeof(double));
+    ret_geom.colors().resize(geo.colors.size()/3);
+    memcpy(&(ret_geom.colors()[0]),
+           &(geo.colors[0]),
+           geo.colors.size()*sizeof(double));
+    ret_geom.tris().resize(geo.tris.size()/3);
+    memcpy(&(ret_geom.tris()[0]),
+           &(geo.tris[0]),
+           geo.tris.size()*sizeof(unsigned int));
+    return ret_geom;
+  }
 }
 
 namespace CVC_NAMESPACE
@@ -294,5 +319,25 @@ namespace CVC_NAMESPACE
       }
 
     return vol;
+  }
+
+  // ---
+  // iso
+  // ---
+  // Purpose: 
+  //   Returns geometry representing an isosurface of the specified volume.
+  // ---- Change History ----
+  // 12/29/2013 -- Joe R. -- Creation.
+  geometry iso(volume vol, double isovalue, double r, double g, double b)
+  {
+    thread_info ti(BOOST_CURRENT_FUNCTION);
+    FastContouring::ContourExtractor contourExtractor;
+    FastContouring::Volume v;
+    v.data = *vol;
+    v.xdim = vol.XDim(); v.ydim = vol.YDim(); v.zdim = vol.ZDim();
+    v.xmin = vol.XMin(); v.ymin = vol.YMin(); v.zmin = vol.ZMin();
+    v.xmax = vol.XMax(); v.ymax = vol.YMax(); v.zmax = vol.ZMax();
+    contourExtractor.setVolume(v);
+    return convert(contourExtractor.extractContour(isovalue,r,g,b));
   }
 }

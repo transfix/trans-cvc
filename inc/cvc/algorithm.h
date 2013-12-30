@@ -54,6 +54,15 @@ namespace CVC_NAMESPACE
 	     */
 	     sdf_method method = MULTI_SDF);
 
+  // ---
+  // iso
+  // ---
+  // Purpose: 
+  //   Returns geometry representing an isosurface of the specified volume.
+  // ---- Change History ----
+  // 12/29/2013 -- Joe R. -- Creation.
+  geometry iso(double isovalue, double r = 1.0, double g = 1.0, double b = 1.0);
+
 #if 0
   /*
    * volren - Volume raycaster interface

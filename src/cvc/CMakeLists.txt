@@ -49,6 +49,7 @@ add_definitions(-DCVC_VERSION_STRING=\"${CVC_VERSION}\")
 
 add_definitions(-DCVC_USING_SDFLIB)
 set(CVC_LINK_LIBS sign_distance_function)
+set(CVC_LINK_LIBS fast_contouring)
 
 option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" ON)
 if(CVC_USING_XMLRPC)
