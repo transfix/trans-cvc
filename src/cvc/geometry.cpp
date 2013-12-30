@@ -569,8 +569,14 @@ namespace CVC_NAMESPACE
       }
   }
 
-  void geometry::read(const std::string& filename)
+  geometry& geometry::read(const std::string& filename)
   {
+    if(filename == ".CVC_BUNNY.raw")
+      {
+	*this = bunny();
+	return *this;
+      }
+
     std::string errors;
     boost::regex file_extension("^(.*)(\\.\\S*)$");
     boost::smatch what;
@@ -587,7 +593,9 @@ namespace CVC_NAMESPACE
         else 
           throw CVC_NAMESPACE::unsupported_geometry_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
                                                               std::string(": Cannot read ") + filename);
-      }    
+      }
+
+    return *this;
   }
 
   // 12/27/2013 -- Joe R. -- Adapted from old io.h header in VolumeRover
@@ -598,7 +606,7 @@ namespace CVC_NAMESPACE
         
     ofstream outf(filename.c_str());
     if(!outf)
-      throw runtime_error(string("Could not open ") + filename);
+      throw write_error(string("Could not open ") + filename);
     
     unsigned int num_elems;
     if(boundary().size() != points().size()) //if we don't have boundary information
@@ -618,7 +626,7 @@ namespace CVC_NAMESPACE
       }
     outf << points().size() << " " << num_elems << endl;
     if(!outf)
-      throw runtime_error("Could not write number of points or number of tris to file!");
+      throw write_error("Could not write number of points or number of tris to file!");
 
     // arand: 4-21-2011
     // changed to check file extension
@@ -657,7 +665,7 @@ namespace CVC_NAMESPACE
           outf << " " << boundary()[distance(points().begin(),i)];
         outf << endl;
         if(!outf)
-          throw runtime_error(str(format("Error writing vertex %1%") % distance(points().begin(),i)));
+          throw write_error(str(format("Error writing vertex %1%") % distance(points().begin(),i)));
       }
     
     if(lines().size() != 0)
@@ -673,7 +681,7 @@ namespace CVC_NAMESPACE
               }
 
             if(!outf)
-              throw runtime_error(str(format("Error writing line %1%") % distance(lines().begin(),i)));
+              throw write_error(str(format("Error writing line %1%") % distance(lines().begin(),i)));
           }
       }
     else if(tris().size() != 0)
@@ -691,7 +699,7 @@ namespace CVC_NAMESPACE
                   }
                 
                 if(!outf)
-                  throw runtime_error(str(format("Error writing triangle %1%") % distance(tris().begin(),i)));
+                  throw write_error(str(format("Error writing triangle %1%") % distance(tris().begin(),i)));
               }
           }
         else
@@ -701,7 +709,7 @@ namespace CVC_NAMESPACE
                 outf << tris()[4*i][0] << " " << tris()[4*i][1] << " " 
                      << tris()[4*i][2] << " " << tris()[4*i+1][2] << endl;
                 if(!outf)
-                  throw runtime_error(str(format("Error writing tetrahedron %1%") % i));
+                  throw write_error(str(format("Error writing tetrahedron %1%") % i));
               }
           }
       }
@@ -720,7 +728,7 @@ namespace CVC_NAMESPACE
                   }
                 
                 if(!outf)
-                  throw runtime_error(str(format("Error writing quad %1%") % distance(quads().begin(),i)));
+                  throw write_error(str(format("Error writing quad %1%") % distance(quads().begin(),i)));
               }
           }
         else
@@ -740,16 +748,17 @@ namespace CVC_NAMESPACE
                 
 
                 if(!outf)
-                  throw runtime_error(str(format("Error writing hexahedron %1%") % i));           
+                  throw write_error(str(format("Error writing hexahedron %1%") % i));           
               }
           }
-      }    
+      }
   }
 
   // arand: written 4-11-2011
   //        directly read a cvc-raw type file into the data structure
   geometry::geometry(const std::string& filename)
   {
+    init_ptrs();
     read(filename);
   }
 

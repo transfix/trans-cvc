@@ -49,6 +49,8 @@ namespace CVC_NAMESPACE
       : voxels(vox), _boundingBox(box), _desc("No Name") {}
     volume(const volume& vol)
       : voxels(vol), _boundingBox(vol.boundingBox()), _desc(vol.desc()) {}
+    volume(const std::string& filename)
+      { read(filename); }
     ~volume() {}
 
     /*

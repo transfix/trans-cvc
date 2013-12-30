@@ -73,7 +73,7 @@ namespace CVC_NAMESPACE
     typedef boost::shared_ptr<normals_t>   normals_ptr_t;
     typedef boost::shared_ptr<colors_t>    colors_ptr_t;
     typedef boost::shared_ptr<lines_t>     lines_ptr_t;
-    typedef boost::shared_ptr<tris_t> tris_ptr_t;
+    typedef boost::shared_ptr<tris_t>      tris_ptr_t;
     typedef boost::shared_ptr<quads_t>     quads_ptr_t;
 
     enum ARRAY_TYPE
@@ -160,7 +160,7 @@ namespace CVC_NAMESPACE
     geometry& smoothing(float delta = 0.1f, bool fix_boundary = false);
 
     //read file directly info data structure
-    void read(const std::string& filename);
+    geometry& read(const std::string& filename);
 
     //write data structure to file
     void write(const std::string& filename) const;

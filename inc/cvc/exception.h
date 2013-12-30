@@ -26,13 +26,14 @@
 #include <cvc/namespace.h>
 
 #include <boost/format.hpp>
-#include <exception>
+#include <boost/exception/exception.hpp>
+
 #include <string>
 
 namespace CVC_NAMESPACE
 {
   /***** Exceptions ****/
-  class exception : public std::exception
+  class exception : public boost::exception
   {
   public:
     exception() {}
@@ -66,6 +67,7 @@ namespace CVC_NAMESPACE
   CVC_DEF_EXCEPTION(index_out_of_bounds);
   CVC_DEF_EXCEPTION(volume_properties_mismatch);
   CVC_DEF_EXCEPTION(volume_cache_directory_file_error);
+  CVC_DEF_EXCEPTION(command_line_error);
 };
 
 #endif

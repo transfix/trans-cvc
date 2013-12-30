@@ -48,10 +48,13 @@ message(STATUS "libcvc version: ${CVC_VERSION}")
 add_definitions(-DCVC_VERSION_STRING=\"${CVC_VERSION}\")
 
 add_definitions(-DCVC_USING_SDFLIB)
-set(CVC_LINK_LIBS sign_distance_function)
-set(CVC_LINK_LIBS fast_contouring)
+set(CVC_LINK_LIBS 
+    sign_distance_function 
+    fast_contouring
+)
 
 option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" ON)
+mark_as_advanced(CVC_USING_XMLRPC)
 if(CVC_USING_XMLRPC)
   set(CVC_LINK_LIBS ${CVC_LINK_LIBS} xmlrpc)
   add_definitions(-DUSING_XMLRPC)
@@ -139,11 +142,13 @@ endif(CVC_APP_XML_PROPERTY_MAP)
 mark_as_advanced(CVC_APP_XML_PROPERTY_MAP)
 
 option(CVC_GEOMETRY_ENABLE_BUNNY "Enable built-in bunny geometry test tri mesh" ON)
+mark_as_advanced(CVC_GEOMETRY_ENABLE_BUNNY)
 if(CVC_GEOMETRY_ENABLE_BUNNY)
   add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
 endif(CVC_GEOMETRY_ENABLE_BUNNY)
 
 option(CVC_GEOMETRY_CORRECT_INDEX_START "adjust indices if they start from 1 rather than 0." OFF)
+mark_as_advanced(CVC_GEOMETRY_CORRECT_INDEX_START)
 if(CVC_GEOMETRY_ENABLE_BUNNY)
   add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
 endif(CVC_GEOMETRY_ENABLE_BUNNY)
@@ -154,7 +159,7 @@ if(NOT DISABLE_CGAL)
     include(${CGAL_USE_FILE})
     # need the following flags in case CGAL has some special compiler needs for this compiler
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGAL_CXX_FLAGS_INIT}")
-    set(LIBS ${LIBS} ${CGAL_LIBRARIES})
+    set(CVC_LINK_LIBS ${CVC_LINK_LIBS} ${CGAL_LIBRARIES})
     add_definitions(-DCVC_GEOMETRY_ENABLE_PROJECT)
     set(INCLUDE_FILES 
         ${INCLUDE_FILES} 
@@ -162,7 +167,7 @@ if(NOT DISABLE_CGAL)
     
     add_definitions(-DCVC_GEOMETRY_ENABLE_PROJECT)
     add_definitions(-DCVC_USING_MULTI_SDF)
-    set(CVC_LINK_LIBS multi_sdf)
+    set(CVC_LINK_LIBS ${CVC_LINK_LIBS} multi_sdf ${GMP_LIBRARIES} ${GMPXX_LIBRARIES})
   endif(CGAL_FOUND)
 endif(NOT DISABLE_CGAL)
 
@@ -176,3 +181,7 @@ add_library(cvc SHARED ${SOURCE_FILES} ${INCLUDE_FILES})
 SetupBoost(cvc)
 
 target_link_libraries(cvc ${CVC_LINK_LIBS})
+
+add_executable(trans-cvc trans-cvc.cpp)
+target_link_libraries(trans-cvc cvc)
+

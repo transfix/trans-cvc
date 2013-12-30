@@ -20,13 +20,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: Dimension.h 4741 2011-10-21 21:22:06Z transfix $ */
-
 #ifndef __CVC_DIMENSION_H__
 #define __CVC_DIMENSION_H__
 
 #include <cvc/types.h>
 #include <cvc/exception.h>
+
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 // If your compiler complains the "The class "cvc::Dimension" has no member "xdim"."
 // Add your architecture Q_OS_XXXX flag (see qglobal.h) in this list.
@@ -37,6 +40,7 @@
 namespace CVC_NAMESPACE
 {
   CVC_DEF_EXCEPTION(null_dimension);
+  CVC_DEF_EXCEPTION(invalid_dimension_string);
 
   class dimension
   {
@@ -65,6 +69,12 @@ namespace CVC_NAMESPACE
     */
     template <class C> explicit dimension(const C& m) : 
       xdim(m[0]), ydim(m[1]), zdim(m[2]) {}
+
+    //initialize from string
+    explicit dimension(const std::string& s)
+      {
+        str(s);
+      }
 
     dimension& operator=(const dimension& d)
     {
@@ -132,6 +142,36 @@ namespace CVC_NAMESPACE
     uint64 XDim() const { return xdim; }
     uint64 YDim() const { return ydim; }
     uint64 ZDim() const { return zdim; }
+
+    //conversion to/from csv - transfix - 04/06/2012
+    std::string str() const
+    {
+      using namespace boost;
+      return boost::str(format("%1%,%2%,%3%")
+                        % xdim % ydim % zdim);
+    }
+
+    void str(const std::string& s) throw(invalid_dimension_string)
+    {
+      using namespace std;
+      using namespace boost;
+      using namespace boost::algorithm;
+      vector<string> parts;
+      split(parts,s,is_any_of(","));
+      if(parts.size()!=3) throw invalid_dimension_string(s);
+      try
+        {
+          for(int i = 0; i < 3; i++)
+            {
+              trim(parts[i]);
+              (*this)[i] = lexical_cast<uint64>(parts[i]);
+            }
+        }
+      catch(std::exception& e)
+        {
+          throw invalid_dimension_string(e.what());
+        }
+    }
   };
 };
 

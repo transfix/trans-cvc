@@ -165,12 +165,16 @@ namespace
       }
 
     boost::scoped_array<float> colors(new float[nverts*3]);
-    for(int i = 0; i < nverts; i++)
-      {
-	colors[i*3+0] = geom.const_colors()[i][0];
-	colors[i*3+1] = geom.const_colors()[i][1];
-	colors[i*3+2] = geom.const_colors()[i][2];
-      }
+    if(geom.const_colors().empty())
+      for(int i = 0; i < nverts*3; i++)
+	colors[i] = 1.0f;
+    else
+      for(int i = 0; i < nverts; i++)
+	{
+	  colors[i*3+0] = geom.const_colors()[i][0];
+	  colors[i*3+1] = geom.const_colors()[i][1];
+	  colors[i*3+2] = geom.const_colors()[i][2];
+	}
 
     int ntris = geom.num_tris();
     boost::scoped_array<int> tris(new int[ntris*3]);

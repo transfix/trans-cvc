@@ -27,6 +27,7 @@ include(SetupBoost)
 include(SetupGSL)
 
 option(DISABLE_CGAL "This disables CGAL even if it is available on the build system." OFF)
+mark_as_advanced(DISABLE_CGAL)
 if (NOT DISABLE_CGAL)
   include( SetupCGAL )
 endif (NOT DISABLE_CGAL)
@@ -40,6 +41,7 @@ endif(APPLE)
 
 # experimental
 option(USING_STANDARD_INSTALL_LOCATION "If on, it will not put everything under $prefix/trans-cvc" ON)
+mark_as_advanced(USING_STANDARD_INSTALL_LOCATION)
 if(USING_STANDARD_INSTALL_LOCATION)
   set(ADDED_PREFIX ".")
 else(USING_STANDARD_INSTALL_LOCATION)
