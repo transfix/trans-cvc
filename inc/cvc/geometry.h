@@ -162,6 +162,9 @@ namespace CVC_NAMESPACE
     //read file directly info data structure
     void read(const std::string& filename);
 
+    //write data structure to file
+    void write(const std::string& filename) const;
+
   protected:
     void init_ptrs();
     void calc_extents() const;

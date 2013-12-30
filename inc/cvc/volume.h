@@ -124,6 +124,7 @@ namespace CVC_NAMESPACE
     virtual volume& read(const std::string& filename,
 			 unsigned int var = 0, unsigned int time = 0,
 			 const bounding_box& subvolbox = bounding_box());
+    virtual volume& write(const std::string& filename);
 
   protected:
     bounding_box _boundingBox;

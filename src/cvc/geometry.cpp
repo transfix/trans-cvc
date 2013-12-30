@@ -463,7 +463,7 @@ namespace CVC_NAMESPACE
                 tri_t &tri = tris()[*j];
                 for(int k=0; k<3; k++)
                   if(dot(normals()[tri[k]],
-			 normals()[distance(points().begin(),i)]) < 0)
+                         normals()[distance(points().begin(),i)]) < 0)
                     for(int l=0; l<3; l++)
                       normals()[tri[k]][l] *= -1.0;
               }
@@ -587,6 +587,162 @@ namespace CVC_NAMESPACE
         else 
           throw CVC_NAMESPACE::unsupported_geometry_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
                                                               std::string(": Cannot read ") + filename);
+      }    
+  }
+
+  // 12/27/2013 -- Joe R. -- Adapted from old io.h header in VolumeRover
+  void geometry::write(const std::string& filename) const
+  {
+    using namespace std;
+    using namespace boost;
+        
+    ofstream outf(filename.c_str());
+    if(!outf)
+      throw runtime_error(string("Could not open ") + filename);
+    
+    unsigned int num_elems;
+    if(boundary().size() != points().size()) //if we don't have boundary information
+      {
+        num_elems = 
+          lines().size() > 0 ? lines().size() :
+          tris().size() > 0 ? tris().size()   :
+          quads().size() > 0 ? quads().size() :
+          0;
+      }
+    else
+      {
+        num_elems =
+          tris().size() > 0 ? tris().size()/4   :
+          quads().size() > 0 ? quads().size()/6 :
+          0;
+      }
+    outf << points().size() << " " << num_elems << endl;
+    if(!outf)
+      throw runtime_error("Could not write number of points or number of tris to file!");
+
+    // arand: 4-21-2011
+    // changed to check file extension
+    // normals and colors are only printed if .rawn/.rawnc/.rawc
+    // have been specified...
+    bool haveNormals = (normals().size() == points().size());
+    bool printNormals = (ends_with(filename,".rawn") || ends_with(filename,".rawnc"));
+    bool haveColors = (colors().size() == points().size());
+    bool printColors = (ends_with(filename,".rawc") || ends_with(filename,".rawnc"));
+
+    if (printNormals && !haveNormals) {
+      std::cout << "WARNING: file with normals requested but not available." << std::endl;
+    }
+
+    if (printColors && !haveColors) {
+      std::cout << "WARNING: file with normals requested but not available." << std::endl;
+    }
+    
+    for(typename points_t::const_iterator i = points().begin();
+        i != points().end();
+        i++)
+      {
+        outf << (*i)[0] << " " << (*i)[1] << " " << (*i)[2];
+
+        if(haveNormals && printNormals)
+          outf << " " 
+               << normals()[distance(points().begin(),i)][0] << " " 
+               << normals()[distance(points().begin(),i)][1] << " " 
+               << normals()[distance(points().begin(),i)][2];
+        if(haveColors && printColors)
+          outf << " " 
+               << colors()[distance(points().begin(),i)][0] << " " 
+               << colors()[distance(points().begin(),i)][1] << " " 
+               << colors()[distance(points().begin(),i)][2];
+        if(boundary().size() == points().size())
+          outf << " " << boundary()[distance(points().begin(),i)];
+        outf << endl;
+        if(!outf)
+          throw runtime_error(str(format("Error writing vertex %1%") % distance(points().begin(),i)));
+      }
+    
+    if(lines().size() != 0)
+      {
+        for(typename lines_t::const_iterator i = lines().begin(); i != lines().end(); i++)
+          {
+            typedef typename lines_t::value_type cell_type;
+            for(typename cell_type::const_iterator j = i->begin(); j != i->end(); j++)
+              {
+                outf << *j;
+                if(next(j) == i->end()) outf << endl;
+                else outf << " ";
+              }
+
+            if(!outf)
+              throw runtime_error(str(format("Error writing line %1%") % distance(lines().begin(),i)));
+          }
+      }
+    else if(tris().size() != 0)
+      {
+        if(boundary().size() != points().size()) //if we don't have boundary info, don't treat these tris as part of a tet
+          {
+            for(typename tris_t::const_iterator i = tris().begin(); i != tris().end(); i++)
+              {
+                typedef typename tris_t::value_type cell_type;
+                for(typename cell_type::const_iterator j = i->begin(); j != i->end(); j++)
+                  {
+                    outf << *j;
+                    if(next(j) == i->end()) outf << endl;
+                    else outf << " ";
+                  }
+                
+                if(!outf)
+                  throw runtime_error(str(format("Error writing triangle %1%") % distance(tris().begin(),i)));
+              }
+          }
+        else
+          {
+            for(unsigned int i = 0; i < tris().size()/4; i++)
+              {
+                outf << tris()[4*i][0] << " " << tris()[4*i][1] << " " 
+                     << tris()[4*i][2] << " " << tris()[4*i+1][2] << endl;
+                if(!outf)
+                  throw runtime_error(str(format("Error writing tetrahedron %1%") % i));
+              }
+          }
+      }
+    else if(quads().size() != 0)
+      {
+        if(boundary().size() != points().size()) //if we don't have boundary info, don't tread these quads as part of a hexa
+          {
+            for(typename quads_t::const_iterator i = quads().begin(); i != quads().end(); i++)
+              {
+                typedef typename quads_t::value_type cell_type;
+                for(typename cell_type::const_iterator j = i->begin(); j != i->end(); j++)
+                  {
+                    outf << *j;
+                    if(next(j) == i->end()) outf << endl;
+                    else outf << " ";
+                  }
+                
+                if(!outf)
+                  throw runtime_error(str(format("Error writing quad %1%") % distance(quads().begin(),i)));
+              }
+          }
+        else
+          {
+            for(unsigned int i = 0; i < quads().size()/6; i++)
+              {
+#if 0
+                outf << quads()[6*i][0] << " " << quads()[6*i][1] << " "
+                     << quads()[6*i][2] << " " << quads()[6*i][3] << " "
+                     << quads()[6*i+1][1] << " " << quads()[6*i+1][0] << " "
+                     << quads()[6*i+1][3] << " " << quads()[6*i+1][2] << endl;
+#endif
+                outf << quads()[6*i][0] << " " << quads()[6*i][1] << " "
+                     << quads()[6*i][2] << " " << quads()[6*i][3] << " "
+                     << quads()[6*i+1][0] << " " << quads()[6*i+1][1] << " "
+                     << quads()[6*i+1][2] << " " << quads()[6*i+1][3] << endl;
+                
+
+                if(!outf)
+                  throw runtime_error(str(format("Error writing hexahedron %1%") % i));           
+              }
+          }
       }    
   }
 

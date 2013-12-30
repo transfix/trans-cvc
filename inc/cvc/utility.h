@@ -53,6 +53,11 @@ namespace CVC_NAMESPACE
       }
     }
 
+  static inline bool ends_with(const std::string& haystack, const std::string& needle)
+    {
+      return haystack.rfind(needle) == haystack.size() - needle.size();
+    }
+
   // arand: the mac doesn't like VERSION... so I changed it to VM_VERSION
   //        also, I moved this to the header... I have no idea why this was working
   //        in the .cpp file but the mac was complaining
