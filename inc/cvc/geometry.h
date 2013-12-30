@@ -42,7 +42,11 @@ namespace CVC_NAMESPACE
   // Purpose: 
   //   Standard geometry container for cvc algorithms.
   // ---- Change History ----
-  // 07/03/2010 -- Joe R. -- Initial implementation.
+  // 07/03/2010 -- Joe R. -- Creation.
+  // 04/11/2011 -- arand  -- Directly read a cvc-raw type file into the data structure
+  // 11/16/2011 -- arand  -- Added off reader. This is not fully functional but it does
+  //                         handle the most common variants of off files...
+  // 12/29/2013 -- Joe R. -- Making read_off, read_raw protected, adding read function.
   class geometry
   {
   public:
@@ -87,9 +91,6 @@ namespace CVC_NAMESPACE
     geometry(const geometry& geom);
     geometry(const std::string & filename);
     ~geometry();
-
-    void read_raw(const std::string & filename);
-    void read_off(const std::string & filename);
 
     void copy(const geometry& geom);
     geometry& operator=(const geometry& geom);
@@ -158,10 +159,16 @@ namespace CVC_NAMESPACE
     //sangmin park's smoothing method
     geometry& smoothing(float delta = 0.1f, bool fix_boundary = false);
 
+    //read file directly info data structure
+    void read(const std::string& filename);
+
   protected:
     void init_ptrs();
     void calc_extents() const;
     virtual void pre_write(ARRAY_TYPE at);
+
+    void read_raw(const std::string & filename);
+    void read_off(const std::string & filename);
 
     points_ptr_t    _points;
     boundary_ptr_t  _boundary;

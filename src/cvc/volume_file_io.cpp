@@ -23,25 +23,6 @@
 
 #include <cvc/volume_file_io.h>
 
-// **** VolMagick File I/O classes
-#if 0
-#include <cvc/null_io.h>
-#include <cvc/rawiv_io.h>
-#include <cvc/rawv_io.h>
-#include <cvc/mrc_io.h>
-#include <cvc/spider_io.h>
-#include <cvc/vtk_io.h>
-#ifdef VOLMAGICK_USING_IMOD_MRC
-#include <cvc/imod_mrc_io.h>
-#endif
-#ifdef VOLMAGICK_USING_VOLMAGICK_INR
-#include <cvc/inr_io.h>
-#endif
-#ifdef VOLMAGICK_USING_HDF5
-#include <cvc/hdf5_io.h>
-#endif
-#endif
-
 #include <cvc/utility.h>
 #include <cvc/app.h>
 #include <cvc/exception.h>
@@ -124,9 +105,9 @@ namespace CVC_NAMESPACE
     vol.boundingBox(subvolbox);
   }
   
-  // -------------------------------
+  // --------------------------------
   // volume_file_io::writeBoundingBox
-  // -------------------------------
+  // --------------------------------
   // Purpose:
   //   Writes the specified bounding box to the file.  The default implementation is slow
   //   because it has to read the entire file.  This can be sped up on an individual file type
@@ -145,15 +126,16 @@ namespace CVC_NAMESPACE
     CVC_NAMESPACE::writeVolumeFile(vols,filename);
   }
 
-  // --------------------------
+  // ---------------------------
   // volume_file_io::handlersMap
-  // --------------------------
+  // ---------------------------
   // Purpose:
   //   Static initialization of handler map.  Clients use the handler_map
   //   to add themselves to the collection of objects that are to be used
   //   to perform volume file i/o operations.
   // ---- Change History ----
-  // 11/13/2009 -- Joe R. -- Initially implemented.
+  // 11/13/2009 -- Joe R. -- Creation.
+  // 12/27/2013 -- Joe R. -- Handlers now responsible for adding themselves to the map.
   volume_file_io::handler_map& volume_file_io::handlerMap()
   {
     //It's ok to leak: http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.15
@@ -161,26 +143,26 @@ namespace CVC_NAMESPACE
     return *p;
   }
 
-  // ----------------------------
+  // -----------------------------
   // volume_file_io::insertHandler
-  // ----------------------------
+  // -----------------------------
   // Purpose:
   //   Convenence function for adding objects to the map.
   // ---- Change History ----
-  // 11/13/2009 -- Joe R. -- Initially implemented.
+  // 11/13/2009 -- Joe R. -- Creation.
   // 11/20/2009 -- Joe R. -- Removed extension arg.  Now using what the object provides.
   void volume_file_io::insertHandler(const ptr& vfio)
   {
     insertHandler(handlerMap(),vfio);
   }
 
-  // ----------------------------
+  // -----------------------------
   // volume_file_io::removeHandler
-  // ----------------------------
+  // -----------------------------
   // Purpose:
   //   Convenence function for removing objects from the map.
   // ---- Change History ----
-  // 11/13/2009 -- Joe R. -- Initially implemented.
+  // 11/13/2009 -- Joe R. -- Creation.
   void volume_file_io::removeHandler(const ptr& vfio)
   {
     for(handler_map::iterator i = handlerMap().begin();
@@ -205,7 +187,7 @@ namespace CVC_NAMESPACE
   // Purpose:
   //   Convenence function for removing objects from the map.
   // ---- Change History ----
-  // 11/13/2009 -- Joe R. -- Initially implemented.
+  // 11/13/2009 -- Joe R. -- Creation.
   void volume_file_io::removeHandler(const std::string& id)
   {
     for(handler_map::iterator i = handlerMap().begin();
@@ -247,38 +229,10 @@ namespace CVC_NAMESPACE
   // Purpose:
   //   Adds the standard volume_file_io objects to a new handler_map object
   // ---- Change History ----
-  // 11/20/2009 -- Joe R. -- Initially implemented.
+  // 11/20/2009 -- Joe R. -- Creation.
   volume_file_io::handler_map *volume_file_io::initializeMap()
   {
-    handler_map *map = new handler_map;
-
-#if 0
-    handler_map &ref = *map;
-    insertHandler(ref, ptr(new Null_IO));
-    insertHandler(ref, ptr(new RawIV_IO));
-    insertHandler(ref, ptr(new RawIV_IO(true)));
-    insertHandler(ref, ptr(new RawV_IO));
-    insertHandler(ref, ptr(new MRC_IO));
-    insertHandler(ref, ptr(new Spider_IO));
-    insertHandler(ref, ptr(new VTK_IO));
-
-#ifdef VOLMAGICK_USING_IMOD_MRC
-    insertHandler(ref, ptr(new IMOD_MRC_IO));
-#endif
-
-#ifdef VOLMAGICK_USING_VOLMAGICK_INR
-    insertHandler(ref, ptr(new INR_IO));
-#endif
-
-#ifdef VOLMAGICK_USING_HDF5
-    insertHandler(ref, ptr(new HDF5_IO));
-#endif
-
-#ifdef VOLMAGICK_USING_QTIMAGE
-    insertHandler(ref, ptr(new QtImage_IO));
-#endif
-#endif
-    
+    handler_map *map = new handler_map;    
     return map;
   }
 
@@ -288,7 +242,7 @@ namespace CVC_NAMESPACE
   // Purpose:
   //   Convenence function for adding objects to the specified map.
   // ---- Change History ----
-  // 11/20/2009 -- Joe R. -- Initially implemented.
+  // 11/20/2009 -- Joe R. -- Creation.
   void volume_file_io::insertHandler(handler_map& hm,
 				     const ptr& vfio)
   {
@@ -321,7 +275,7 @@ namespace CVC_NAMESPACE
   //   The main readVolumeFile function.  Refers to the handler map to choose
   //   an appropriate IO object for reading the requested volume file.
   // ---- Change History ----
-  // ??/??/2007 -- Joe R. -- Initially implemented.
+  // ??/??/2007 -- Joe R. -- Creation.
   // 11/13/2009 -- Joe R. -- Re-implemented using volume_file_io handler map.
   // 12/28/2009 -- Joe R. -- Collecting exception error strings
   // 09/05/2011 -- Joe R. -- Using splitRawFilename to extract real filename
@@ -385,7 +339,7 @@ namespace CVC_NAMESPACE
   //    Same as above except it uses a bounding box.
   //   
   // ---- Change History ----
-  // ??/??/2009 -- Joe R. -- Initially implemented.
+  // ??/??/2009 -- Joe R. -- Creation.
   // 01/03/2010 -- Joe R. -- Re-implemented using volume_file_io handler map.
   // 09/05/2011 -- Joe R. -- Using splitRawFilename to extract real filename
   //                         if the provided filename is a file|obj tuple.
@@ -461,7 +415,7 @@ namespace CVC_NAMESPACE
   //   The main writeVolumeFile function.  Refers to the handler map to choose
   //   an appropriate IO object for writing to the requested volume file.
   // ---- Change History ----
-  // ??/??/2007 -- Joe R. -- Initially implemented.
+  // ??/??/2007 -- Joe R. -- Creation.
   // 11/13/2009 -- Joe R. -- Re-implemented using volume_file_io handler map.
   // 12/28/2009 -- Joe R. -- Collecting exception error strings
   // 09/05/2011 -- Joe R. -- Using splitRawFilename to extract real filename
@@ -613,7 +567,7 @@ namespace CVC_NAMESPACE
   //   The main createVolumeFile function.  Refers to the handler map to choose
   //   an appropriate IO object for creating the requested volume file.
   // ---- Change History ----
-  // ??/??/2007 -- Joe R. -- Initially implemented.
+  // ??/??/2007 -- Joe R. -- Creation.
   // 11/13/2009 -- Joe R. -- Re-implemented using volume_file_io handler map.
   // 12/28/2009 -- Joe R. -- Collecting exception error strings
   // 09/05/2011 -- Joe R. -- Using splitRawFilename to extract real filename
@@ -676,7 +630,7 @@ namespace CVC_NAMESPACE
   // Purpose:
   //  Returns a volume file's bounding box.
   // ---- Change History ----
-  // 04/06/2012 -- Joe R. -- Initially implemented.
+  // 04/06/2012 -- Joe R. -- Creation.
   bounding_box readBoundingBox(const std::string& filename)
   {
     return volume_file_info(filename).boundingBox();
@@ -688,7 +642,7 @@ namespace CVC_NAMESPACE
   // Purpose:
   //  Changes a volume file's bounding box.
   // ---- Change History ----
-  // 04/06/2012 -- Joe R. -- Initially implemented.
+  // 04/06/2012 -- Joe R. -- Creation.
   void writeBoundingBox(const bounding_box& bbox, const std::string& filename)                        
   {
     std::string errors;

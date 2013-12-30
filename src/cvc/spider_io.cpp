@@ -322,7 +322,9 @@ namespace CVC_NAMESPACE
     /* Check file type */
     fseek(fp, currentPosition+16, SEEK_SET);
     for (int i = 0; i < 4; i++)
-      fread(&(file_type.c[i]), sizeof(unsigned char), 1, fp);
+      {
+	size_t retval = fread(&(file_type.c[i]), sizeof(unsigned char), 1, fp);
+      }
     fseek(fp,  currentPosition+0, SEEK_SET);
     switch (filetype)
       {
@@ -371,7 +373,9 @@ namespace CVC_NAMESPACE
     /* Read header */
     reversed=fileReversed ^ machineReversed;
     if (!reversed)
-      fread(&header, sizeof(SpiderHeader), 1, fp);
+      {
+	size_t retval = fread(&header, sizeof(SpiderHeader), 1, fp);
+      }
     else
       {
 	FREAD(&header,             sizeof(float),  36, fp, true);
@@ -427,7 +431,7 @@ namespace CVC_NAMESPACE
     for (unsigned int i = 0; i < tmpSize / 4; i++)
       {
 	float tmp;
-	fread(&tmp, sizeof(float), 1, fp);
+	size_t retval = fread(&tmp, sizeof(float), 1, fp);
       }
     currentPosition=ftell(fp);
 

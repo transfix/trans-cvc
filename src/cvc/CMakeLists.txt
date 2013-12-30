@@ -142,6 +142,11 @@ if(CVC_GEOMETRY_ENABLE_BUNNY)
   add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
 endif(CVC_GEOMETRY_ENABLE_BUNNY)
 
+option(CVC_GEOMETRY_CORRECT_INDEX_START "adjust indices if they start from 1 rather than 0." OFF)
+if(CVC_GEOMETRY_ENABLE_BUNNY)
+  add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
+endif(CVC_GEOMETRY_ENABLE_BUNNY)
+
 if(NOT DISABLE_CGAL)
   find_package(CGAL)
   if(CGAL_FOUND)

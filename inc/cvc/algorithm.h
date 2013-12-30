@@ -46,7 +46,7 @@ namespace CVC_NAMESPACE
 	     const dimension& dim,
 	     /*
 	       Bounding box of output vol. If default initialized,
-	       use extents of Geometry.
+	       use extents of geometry.
 	     */
 	     const bounding_box& bbox = bounding_box(),
 	     /*

@@ -239,4 +239,15 @@ namespace CVC_NAMESPACE
   {
     return combineWith(vol,voxel_dimensions());
   }
+
+  volume& volume::read(const std::string& filename,
+		       unsigned int var, unsigned int time,
+		       const bounding_box& subvolbox)
+  {
+    if(!subvolbox.isNull())
+      readVolumeFile(*this, filename, var, time, subvolbox);
+    else
+      readVolumeFile(*this, filename, var, time);
+    return *this;
+  }
 }

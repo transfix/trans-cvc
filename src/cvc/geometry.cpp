@@ -46,6 +46,9 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/regex.hpp>
 
+//#define CVC_GEOMETRY_CORRECT_INDEX_START
+//#define CVC_GEOMETRY_ENABLE_BUNNY
+
 namespace CVC_NAMESPACE
 {
   geometry::geometry()
@@ -566,9 +569,7 @@ namespace CVC_NAMESPACE
       }
   }
 
-  // arand: written 4-11-2011
-  //        directly read a cvc-raw type file into the data structure
-  geometry::geometry(const std::string & filename)
+  void geometry::read(const std::string& filename)
   {
     std::string errors;
     boost::regex file_extension("^(.*)(\\.\\S*)$");
@@ -586,7 +587,14 @@ namespace CVC_NAMESPACE
         else 
           throw CVC_NAMESPACE::unsupported_geometry_file_type(std::string(BOOST_CURRENT_FUNCTION) + 
                                                               std::string(": Cannot read ") + filename);
-      }
+      }    
+  }
+
+  // arand: written 4-11-2011
+  //        directly read a cvc-raw type file into the data structure
+  geometry::geometry(const std::string& filename)
+  {
+    read(filename);
   }
 
   // arand, 11-16-2011: added off reader
@@ -597,13 +605,9 @@ namespace CVC_NAMESPACE
     using namespace std;
     using namespace boost;
 
-    init_ptrs();
-    _extents_set = false;
-
     std::ifstream inf(filename.c_str());
     if(!inf)
       throw read_error(string("Could not open ") + filename);
-
 
     unsigned int num_verts, num_elems;
     string line;
@@ -639,7 +643,6 @@ namespace CVC_NAMESPACE
       throw read_error(str(format("Not an OFF file (wrong number of tokens in line 2: [%1%])")
                            % split_line.size()));
 
-
     try {
       num_verts = lexical_cast<unsigned int>(split_line[0]);
       num_elems = split_line.size() > 1 ?
@@ -666,13 +669,13 @@ namespace CVC_NAMESPACE
           color_t color;
           for(int i = 3; i < 6; i++)
             color[i-3] = lexical_cast<double>(split_line[i]);
-          _colors->push_back(color);
+          colors().push_back(color);
         case 3: // no colors
           point_t point;
           for(int i = 0; i < 3; i++) {
             point[i] = lexical_cast<double>(split_line[i]);
           }
-          _points->push_back(point);
+          points().push_back(point);
 
           break;
         default:
@@ -703,7 +706,6 @@ namespace CVC_NAMESPACE
             is_any_of(" "),
             token_compress_on);
 
-
       int size = lexical_cast<int>(split_line[0]);
 
       // don't handle segments yet... just planar facets
@@ -720,38 +722,24 @@ namespace CVC_NAMESPACE
         tri[0] = lexical_cast<unsigned int>(split_line[1]);
         tri[1] = lexical_cast<unsigned int>(split_line[i]);
         tri[2] = lexical_cast<unsigned int>(split_line[i+1]);
-        _tris->push_back(tri);
+        tris().push_back(tri);
       }
     }
   }
 
+  // 04/02/2010 -- creation.
   void geometry::read_raw(const std::string & filename)
   {
     using namespace std;
-    using namespace boost;
-    
-    init_ptrs();
+    using namespace boost;    
 
-    // arand: bug fix, 8-23-2011
-    _extents_set = false;
-
-    /*
-      points_ptr_t    _points;
-      boundary_ptr_t  _boundary;
-      normals_ptr_t   _normals;
-      colors_ptr_t    _colors;
-      lines_ptr_t     _lines;
-      tris_ptr_t _tris;
-      quads_ptr_t     _quads;
-    */
-
-    std::ifstream inf(filename.c_str());
+    ifstream inf(filename.c_str());
     if(!inf)
       throw read_error(string("Could not open ") + filename);
     
     unsigned int line_num = 0;
     string line;
-    vector<std::string> split_line;
+    vector<string> split_line;
     unsigned int num_verts, num_elems;
     
     getline(inf, line); line_num++;
@@ -797,9 +785,9 @@ namespace CVC_NAMESPACE
                   point_t point;
                   for(int i = 0; i < 3; i++)
                     point[i] = lexical_cast<double>(split_line[i]);
-                  _points->push_back(point);
+                  points().push_back(point);
                   if(split_line.size() == 4)
-                    _boundary->push_back(lexical_cast<int>(split_line[3]));
+                    boundary().push_back(lexical_cast<int>(split_line[3]));
                 }
                 break;
               case 6: // rawn or rawc
@@ -809,25 +797,25 @@ namespace CVC_NAMESPACE
                   point_t point;
                   for(int i = 0; i < 3; i++)
                     point[i] = lexical_cast<double>(split_line[i]);
-                  _points->push_back(point);
+                  points().push_back(point);
 
                   if(is_rawn)
                     {
                       vector_t normal;
                       for(int i = 3; i < 6; i++)
                         normal[i-3] = lexical_cast<double>(split_line[i]);
-                      _normals->push_back(normal);
+                      normals().push_back(normal);
                     }
                   else
                     {
                       color_t color;
                       for(int i = 3; i < 6; i++)
                         color[i-3] = lexical_cast<double>(split_line[i]);
-                      _colors->push_back(color);
+                      colors().push_back(color);
                     }
 
                   if(split_line.size() == 7)
-                    _boundary->push_back(lexical_cast<int>(split_line[6]));
+                    boundary().push_back(lexical_cast<int>(split_line[6]));
                 }
                 break;
               case 9:  // rawnc
@@ -839,18 +827,18 @@ namespace CVC_NAMESPACE
 
                   for(int i = 0; i < 3; i++)
                     point[i-0] = lexical_cast<double>(split_line[i]);
-                  _points->push_back(point);
+                  points().push_back(point);
 
                   for(int i = 3; i < 6; i++)
                     normal[i-3] = lexical_cast<double>(split_line[i]);
-                  _normals->push_back(normal);
+                  normals().push_back(normal);
 
                   for(int i = 6; i < 9; i++)
                     color[i-6] = lexical_cast<double>(split_line[i]);
-                  _colors->push_back(color);
+                  colors().push_back(color);
 
                   if(split_line.size() == 10)
-                    _boundary->push_back(lexical_cast<int>(split_line[9]));
+                    boundary().push_back(lexical_cast<int>(split_line[9]));
                 }
                 break;
               default:
@@ -881,7 +869,7 @@ namespace CVC_NAMESPACE
                   line_t line;
                   for(unsigned int i = 0; i < split_line.size(); i++)
                     line[i] = lexical_cast<unsigned int>(split_line[i]);
-                  _lines->push_back(line);
+                  lines().push_back(line);
                 }
                 break;
               case 3: // tris
@@ -889,18 +877,18 @@ namespace CVC_NAMESPACE
                   tri_t tri;
                   for(unsigned int i = 0; i < split_line.size(); i++)
                     tri[i] = lexical_cast<unsigned int>(split_line[i]);
-                  _tris->push_back(tri);
+                  tris().push_back(tri);
                 }
                 break;
               case 4: // quads or tetrahedrons
                 {
                   //if we didn't collect boundary information earlier, then we have quads
-                  if(_boundary->size() != _points->size())
+                  if(boundary().size() != points().size())
                     {
                       quad_t quad;
                       for(unsigned int i = 0; i < split_line.size(); i++)
                         quad[i] = lexical_cast<unsigned int>(split_line[i]);
-                      _quads->push_back(quad);
+                      quads().push_back(quad);
                     }
                   else
                     {
@@ -915,14 +903,14 @@ namespace CVC_NAMESPACE
                       tet_tris[3][0] = t[0]; tet_tris[3][1] = t[1]; tet_tris[3][2] = t[3];
 
                       for(unsigned int i = 0; i < 4; i++)
-                        _tris->push_back(tet_tris[i]);
+                        tris().push_back(tet_tris[i]);
                     }
                 }
                 break;
               case 8: // hexahedrons
                 {
                   //if we don't have boundary information, then something is wrong!
-                  if(_boundary->size() != _points->size())
+                  if(boundary().size() != points().size())
                     throw read_error("Incorrect cvc-raw file: missing boundary info for hex verts");
 
                   unsigned int t[8];
@@ -947,7 +935,7 @@ namespace CVC_NAMESPACE
                   hex_quads[5][0] = t[2]; hex_quads[5][1] = t[3]; hex_quads[5][2] = t[7]; hex_quads[5][3] = t[6];
 
                   for(unsigned int i = 0; i < 6; i++)
-                    _quads->push_back(hex_quads[i]);
+                    quads().push_back(hex_quads[i]);
                 }
                 break;
               default:
@@ -969,14 +957,14 @@ namespace CVC_NAMESPACE
 
     //adjust indices if they start from 1 rather than 0.  (i.e. search for a 0 in each index
     //list. If there are no zeros, decrement each index by one)
-#ifdef CVC_GEOMETRY__CORRECT_INDEX_START
+#ifdef CVC_GEOMETRY_CORRECT_INDEX_START
     {
       bool lines_has_zero = false;
       bool tris_has_zero = false;
       bool quads_has_zero = false;
 
-      for(typename lines_t::const_iterator i = lines.begin();
-          i != lines.end();
+      for(typename lines_t::const_iterator i = lines().begin();
+          i != lines().end();
           i++)
         if(find(i->begin(), i->end(), 0) != i->end())
           {
@@ -984,8 +972,8 @@ namespace CVC_NAMESPACE
             break;
           }
 
-      for(typename tris_t::const_iterator i = tris.begin();
-          i != tris.end();
+      for(typename tris_t::const_iterator i = tris().begin();
+          i != tris().end();
           i++)
         if(find(i->begin(), i->end(), 0) != i->end())
           {
@@ -993,8 +981,8 @@ namespace CVC_NAMESPACE
             break;
           }
       
-      for(typename quads_t::const_iterator i = quads.begin();
-          i != quads.end();
+      for(typename quads_t::const_iterator i = quads().begin();
+          i != quads().end();
           i++)
         if(find(i->begin(), i->end(), 0) != i->end())
           {
@@ -1003,20 +991,20 @@ namespace CVC_NAMESPACE
           }
 
       if(!lines_has_zero)
-        for(typename lines_t::iterator i = lines.begin();
-            i != lines.end();
+        for(typename lines_t::iterator i = lines().begin();
+            i != lines().end();
             i++)
           for_each(i->begin(), i->end(), --_1);
 
       if(!tris_has_zero)
-        for(typename tris_t::iterator i = tris.begin();
-            i != tris.end();
+        for(typename tris_t::iterator i = tris().begin();
+            i != tris().end();
             i++)
           for_each(i->begin(), i->end(), --_1);
 
       if(!quads_has_zero)
-        for(typename quads_t::iterator i = quads.begin();
-            i != quads.end();
+        for(typename quads_t::iterator i = quads().begin();
+            i != quads().end();
             i++)
           for_each(i->begin(), i->end(), --_1);
     }

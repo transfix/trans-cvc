@@ -121,6 +121,10 @@ namespace CVC_NAMESPACE
     volume& combineWith(const volume& vol, const dimension& dim);
     volume& combineWith(const volume& vol);
 
+    virtual volume& read(const std::string& filename,
+			 unsigned int var = 0, unsigned int time = 0,
+			 const bounding_box& subvolbox = bounding_box());
+
   protected:
     bounding_box _boundingBox;
     std::string _desc;
