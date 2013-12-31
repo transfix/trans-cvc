@@ -36,7 +36,12 @@
 #include <sign_distance_function/sdfLib.h>
 #endif
 
+//fast_contouring is broken right now... :(
 #include <fast_contouring/FastContouring.h>
+
+//libcontour headers
+#include <contour/contour.h>
+#include <contour/datasetreg3.h>
 
 #include <iostream>
 #include <cstring>
@@ -332,16 +337,85 @@ namespace CVC_NAMESPACE
   //   Returns geometry representing an isosurface of the specified volume.
   // ---- Change History ----
   // 12/29/2013 -- Joe R. -- Creation.
-  geometry iso(volume vol, double isovalue, double r, double g, double b)
+  geometry iso(const volume& vol, double isovalue, double r, double g, double b)
   {
     thread_info ti(BOOST_CURRENT_FUNCTION);
+
+#if 0
     FastContouring::ContourExtractor contourExtractor;
     FastContouring::Volume v;
-    v.data = *vol;
+
+    double mapped_isoval = 255.0*(isovalue - vol.min())/(vol.max() - vol.min());
+
+    volume localvol = vol;
+    localvol.map(0.0,255.0);
+    localvol.voxelType(CVC_NAMESPACE::UChar);
+    v.data = *localvol;
     v.xdim = vol.XDim(); v.ydim = vol.YDim(); v.zdim = vol.ZDim();
     v.xmin = vol.XMin(); v.ymin = vol.YMin(); v.zmin = vol.ZMin();
     v.xmax = vol.XMax(); v.ymax = vol.YMax(); v.zmax = vol.ZMax();
     contourExtractor.setVolume(v);
-    return convert(contourExtractor.extractContour(isovalue,r,g,b));
+    return convert(contourExtractor.extractContour(mapped_isoval,r,g,b));
+#endif
+
+    ConDataset* the_data;
+    Contour3dData *contour3d;
+    int dim[3];
+    float span[3], orig[3];
+
+    dim[0] = vol.XDim(); dim[1] = vol.YDim(); dim[2] = vol.ZDim();
+    span[0] = vol.XSpan(); span[1] = vol.YSpan(); span[2] = vol.ZSpan();
+    orig[0] = vol.XMin(); orig[1] = vol.YMin(); orig[2] = vol.ZMin();
+    
+    //convert it to a supported libcontour type and load it into libisocontour
+    volume localvol = vol;
+    switch(localvol.voxelType())
+      {
+      case UInt:
+      case Double:
+      case UInt64:
+      case Float:
+	localvol.voxelType(Float);
+	the_data = newDatasetReg(CONTOUR_FLOAT, CONTOUR_REG_3D, 1, 1, dim, *localvol);
+	break;
+      case UChar:
+	the_data = newDatasetReg(CONTOUR_UCHAR, CONTOUR_REG_3D, 1, 1, dim, *localvol);
+	break;
+      case UShort:
+	the_data = newDatasetReg(CONTOUR_USHORT, CONTOUR_REG_3D, 1, 1, dim, *localvol);
+	break;
+      }
+
+    ((Datareg3 *)the_data->data->getData(0))->setOrig(orig);
+    ((Datareg3 *)the_data->data->getData(0))->setSpan(span);
+
+    //actually extract the contour
+    contour3d = getContour3d(the_data,0,0,isovalue,NO_COLOR_VARIABLE);
+
+    //convert the result to geometry object
+    geometry result;
+    points_t& points = result.points(); points.resize(contour3d->nvert);
+    colors_t& colors = result.colors(); colors.resize(contour3d->nvert);
+    normals_t& normals = result.normals(); normals.resize(contour3d->nvert);
+    tris_t& tris = result.tris(); tris.resize(contour3d->ntri);
+    for(int i = 0; i < contour3d->nvert; i++)
+      {
+	for(int j=0; j<3; j++)
+	  points[i][j] = contour3d->vert[i][j];
+	for(int j=0; j<3; j++)
+	  normals[i][j] = contour3d->vnorm[i][j];
+
+	colors[i][0] = r;
+	colors[i][1] = g;
+	colors[i][2] = b;
+      }
+    for(int i = 0; i < contour3d->ntri; i++)
+      for(int j=0; j<3; j++)
+	tris[i][j] = contour3d->tri[i][j];
+
+    delete the_data;
+    delete contour3d;
+
+    return result;
   }
 }

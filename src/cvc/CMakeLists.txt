@@ -51,6 +51,7 @@ add_definitions(-DCVC_USING_SDFLIB)
 set(CVC_LINK_LIBS 
     sign_distance_function 
     fast_contouring
+    contour
 )
 
 option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" ON)

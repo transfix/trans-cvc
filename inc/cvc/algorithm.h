@@ -61,7 +61,7 @@ namespace CVC_NAMESPACE
   //   Returns geometry representing an isosurface of the specified volume.
   // ---- Change History ----
   // 12/29/2013 -- Joe R. -- Creation.
-  geometry iso(volume vol, double isovalue, double r = 1.0, double g = 1.0, double b = 1.0);
+  geometry iso(const volume& vol, double isovalue, double r = 1.0, double g = 1.0, double b = 1.0);
 
 #if 0
   /*
