@@ -47,11 +47,10 @@ message(STATUS "libcvc version: ${CVC_VERSION}")
 
 add_definitions(-DCVC_VERSION_STRING=\"${CVC_VERSION}\")
 
-add_definitions(-DCVC_USING_SDFLIB)
-set(CVC_LINK_LIBS 
-    sign_distance_function 
-    fast_contouring
-    contour
+set(CVC_LINK_LIBS ""
+#    sign_distance_function 
+#    fast_contouring
+#    contour
 )
 
 option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" ON)
@@ -165,10 +164,7 @@ if(NOT DISABLE_CGAL)
     set(INCLUDE_FILES 
         ${INCLUDE_FILES} 
 	../../inc/cvc/project_verts.h)
-    
-    add_definitions(-DCVC_GEOMETRY_ENABLE_PROJECT)
-    add_definitions(-DCVC_USING_MULTI_SDF)
-    set(CVC_LINK_LIBS ${CVC_LINK_LIBS} multi_sdf ${GMP_LIBRARIES} ${GMPXX_LIBRARIES})
+    set(CVC_LINK_LIBS ${CVC_LINK_LIBS} ${GMP_LIBRARIES} ${GMPXX_LIBRARIES})
   endif(CGAL_FOUND)
 endif(NOT DISABLE_CGAL)
 

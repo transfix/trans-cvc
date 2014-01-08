@@ -205,12 +205,9 @@ namespace
     if(args.size() < 2)  throw command_line_error("Missing dimension");
     if(args.size() < 3)  throw command_line_error("Missing bounding_box");
     if(args.size() < 4)  throw command_line_error("Missing output volume filename");
-    sdf_method method = args.size() > 4 && args[4] == "MULTI_SDF" ? 
-      MULTI_SDF : SDFLIB; 
     sdf(geometry(args[0]),
         dimension(args[1]),
-        bounding_box(args[2]),
-        method)
+        bounding_box(args[2]))
       .write(args[3]);
   }
 
@@ -249,9 +246,8 @@ namespace
                           "Computes isosurface geometry for a given volume and isovalue.\n"
                           "<isovalue> - value describing the surface to be computed."));                          
       commands["sdf"] = make_tuple(command_func(sdf),
-                                   string("sdf <geometry filename> <dimension> <bounding_box> <output volume filename> [method]\n"
+                                   string("sdf <geometry filename> <dimension> <bounding_box> <output volume filename>\n"
                                           "Computes a signed distance function volume of the geometry specified."
-                                          "[method] defaults to MULTI_SDF.  Other value is SDFLIB.\n"
                                           "<dimension> - comma separated list of 3 integers specifying output volume dimension\n"
                                           "<bounding_box> - comma separated list of 6 floats specifying output volume bounding box"));
       commands["info"] = make_tuple(command_func(info),

@@ -35,10 +35,14 @@
 
 namespace CVC_NAMESPACE
 {
-  enum sdf_method { MULTI_SDF, SDFLIB };
-  /*
-    Compute a signed distance field using the arguments specified.
-  */
+  // ---
+  // sdf
+  // ---
+  // Purpose: 
+  //   Compute a signed distance field using the arguments specified.
+  // ---- Change History ----
+  // 12/29/2013 -- Joe R. -- Creation.
+  // 01/08/2014 - removing sdf_method, always using SDFLibrary now
   volume sdf(const geometry& geom,
 	     /*
 	       Dimension of output sdf vol.
@@ -48,11 +52,7 @@ namespace CVC_NAMESPACE
 	       Bounding box of output vol. If default initialized,
 	       use extents of geometry.
 	     */
-	     const bounding_box& bbox = bounding_box(),
-	     /*
-	       The SDF library to use to generate the volume.
-	     */
-	     sdf_method method = SDFLIB);
+	     const bounding_box& bbox = bounding_box());
 
   // ---
   // iso
@@ -61,7 +61,8 @@ namespace CVC_NAMESPACE
   //   Returns geometry representing an isosurface of the specified volume.
   // ---- Change History ----
   // 12/29/2013 -- Joe R. -- Creation.
-  geometry iso(const volume& vol, double isovalue, double r = 1.0, double g = 1.0, double b = 1.0);
+  // 01/08/2014 -- Joe R. -- Removing color args.
+  geometry iso(const volume& vol, double isovalue);
 
 #if 0
   /*
