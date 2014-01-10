@@ -173,6 +173,91 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/cvc/config.h.cmake ${CMAKE
 source_group("Source Files" FILES ${SOURCE_FILES})
 source_group("Header Files" FILES ${INCLUDE_FILES})
 
+option(CVC_ENABLE_MESHER "enable isosurfacing/meshing capability" ON)
+mark_as_advanced(CVC_ENABLE_MESHER)
+if(CVC_ENABLE_MESHER)
+  add_definitions(-DCVC_ENABLE_MESHER -D_BOOL -DSP2 -DUSEDICT -DNDEBUG)
+  include_directories(cvc-mesher/contour
+                      cvc-mesher/FastContouring
+                      cvc-mesher/VolMagick
+                      cvc-mesher/LBIE)
+  set(SOURCE_FILES
+      ${SOURCE_FILES}
+      cvc-mesher/contour/squeue.cpp
+      cvc-mesher/contour/rangesweep.cpp
+      cvc-mesher/contour/dirseeds.cpp
+      cvc-mesher/contour/contour.cpp
+      cvc-mesher/contour/seeddirreg3.cpp
+      cvc-mesher/contour/contour3d.cpp
+      cvc-mesher/contour/conplotreg3.cpp
+      cvc-mesher/contour/dict.c
+      cvc-mesher/contour/edgehash.cpp
+      cvc-mesher/contour/regprop2.cpp
+      cvc-mesher/contour/spectrumtest.cpp
+      cvc-mesher/contour/ipqueue.cpp
+      cvc-mesher/contour/seedcells.cpp
+      cvc-mesher/contour/conplot3d.cpp
+      cvc-mesher/contour/dataslc.cpp
+      cvc-mesher/contour/cubes.cpp
+      cvc-mesher/contour/conplot2d.cpp
+      cvc-mesher/contour/shelf.cpp
+      cvc-mesher/contour/iqueue.cpp
+      cvc-mesher/contour/datavol.cpp
+      cvc-mesher/contour/cellqueue.cpp
+      cvc-mesher/contour/bin.cpp
+      cvc-mesher/contour/datareg2.cpp
+      cvc-mesher/contour/bucketsearch.cpp
+      cvc-mesher/contour/seedall.cpp
+      cvc-mesher/contour/range.cpp
+      cvc-mesher/contour/hash.cpp
+      cvc-mesher/contour/conplotreg2.cpp
+      cvc-mesher/contour/data.cpp
+      cvc-mesher/contour/inttree.cpp
+      cvc-mesher/contour/seedchkr3.cpp
+      cvc-mesher/contour/conplot.cpp
+      cvc-mesher/contour/queue.cpp
+      #cvc-mesher/contour/main.cpp
+      cvc-mesher/contour/regprop.cpp
+      cvc-mesher/contour/respprop2.cpp
+      cvc-mesher/contour/rangeprop.cpp
+      cvc-mesher/contour/segtree.cpp
+      cvc-mesher/contour/conplot_p.cpp
+      cvc-mesher/contour/contour2d.cpp
+      cvc-mesher/contour/datareg3.cpp
+      cvc-mesher/contour/dirseedsreg2.cpp
+      cvc-mesher/contour/seedchkr2.cpp
+      cvc-mesher/FastContouring/Ray.cpp
+      cvc-mesher/FastContouring/FastContouring.cpp
+      cvc-mesher/FastContouring/Quaternion.cpp
+      cvc-mesher/FastContouring/Tuple.cpp
+      cvc-mesher/FastContouring/Vector.cpp
+      cvc-mesher/FastContouring/ContourGeometry.cpp
+      cvc-mesher/FastContouring/Matrix.cpp
+      cvc-mesher/FastContouring/MarchingCubesBuffers.cpp
+      cvc-mesher/VolMagick/RawV.cpp
+      cvc-mesher/VolMagick/MRC.cpp
+      cvc-mesher/VolMagick/VolumeCache.cpp
+      cvc-mesher/VolMagick/ContrastEnhancement.cpp
+      cvc-mesher/VolMagick/AnisotropicDiffusion.cpp
+      cvc-mesher/VolMagick/BilateralFilter.cpp
+      cvc-mesher/VolMagick/INR.cpp
+      cvc-mesher/VolMagick/RawIV.cpp
+      cvc-mesher/VolMagick/VolMagick.cpp
+      cvc-mesher/VolMagick/Spider.cpp
+      cvc-mesher/VolMagick/main.cpp
+      cvc-mesher/LBIE/normalspline.cpp
+      cvc-mesher/LBIE/e_face.cpp
+      cvc-mesher/LBIE/pcio.cpp
+      cvc-mesher/LBIE/LBIE_geoframe.cpp
+      cvc-mesher/LBIE/tetra.cpp
+      cvc-mesher/LBIE/hexa.cpp
+      cvc-mesher/LBIE/LBIE_Mesher.cpp
+      #cvc-mesher/LBIE/test.cpp
+      cvc-mesher/LBIE/octree.cpp
+      #cvc-mesher/Mesher/main.cpp
+  )
+endif(CVC_ENABLE_MESHER)
+
 add_library(cvc SHARED ${SOURCE_FILES} ${INCLUDE_FILES})
 
 SetupBoost(cvc)
