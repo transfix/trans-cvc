@@ -159,6 +159,9 @@ namespace CVC_NAMESPACE
     //sangmin park's smoothing method
     geometry& smoothing(float delta = 0.1f, bool fix_boundary = false);
 
+    //LBIE mesh quality improvement
+    geometry& quality_improve(int iterations, const std::string& improve_method = "geo_flow");
+
     //read file directly info data structure
     geometry& read(const std::string& filename);
 

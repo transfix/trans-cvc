@@ -31,10 +31,12 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <boost/array.hpp>
+
 // If your compiler complains the "The class "cvc::Dimension" has no member "xdim"."
 // Add your architecture Q_OS_XXXX flag (see qglobal.h) in this list.
 //#if defined (Q_OS_IRIX) || defined (Q_OS_AIX) || defined (Q_OS_HPUX)
-# define UNION_NOT_SUPPORTED
+//# define UNION_NOT_SUPPORTED
 //#endif
 
 namespace CVC_NAMESPACE
@@ -52,7 +54,7 @@ namespace CVC_NAMESPACE
     union
     {
       struct { uint64 xdim, ydim, zdim; };
-      uint64 dim_[3];
+      boost::array<uint64, 3> dim_;
     };
 #endif
     

@@ -201,6 +201,11 @@ namespace CVC_NAMESPACE
      */
     virtual voxels& gdtvFilter(double parameterq, double lambda, unsigned int iteration, unsigned int neigbour);
 
+    //special access to the shared array - careful with this!
+    // 01/11/2014 - Joe R. - creation
+    const boost::shared_array<unsigned char>& data() const { return _voxels; }
+    boost::shared_array<unsigned char>& data() { return _voxels; }
+
   protected:
     void calcMinMax() const;
     void preWrite()

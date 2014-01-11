@@ -210,7 +210,8 @@ if(CVC_ENABLE_MESHER)
   include_directories(cvc-mesher/contour
                       cvc-mesher/FastContouring
                       cvc-mesher/VolMagick
-                      cvc-mesher/LBIE)
+                      cvc-mesher/LBIE
+		      cvc-mesher/Mesher)
   set(INCLUDE_FILES
       ${INCLUDE_FILES}
       cvc-mesher/contour/edgehash.h
@@ -290,6 +291,7 @@ if(CVC_ENABLE_MESHER)
       cvc-mesher/LBIE/endians.h
       cvc-mesher/LBIE/octree.h
       cvc-mesher/LBIE/LBIEMesherRenderable.h
+      cvc-mesher/Mesher/mesher.h
   )
   set(SOURCE_FILES
       ${SOURCE_FILES}
@@ -365,6 +367,7 @@ if(CVC_ENABLE_MESHER)
       #cvc-mesher/LBIE/test.cpp
       cvc-mesher/LBIE/octree.cpp
       #cvc-mesher/Mesher/main.cpp
+      cvc-mesher/Mesher/mesher.cpp
   )
 endif(CVC_ENABLE_MESHER)
 

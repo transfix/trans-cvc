@@ -20,8 +20,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef __VOLMAGICK_H__
-#define __VOLMAGICK_H__
+#ifndef __CVC_VOLMAGICK_H__
+#define __CVC_VOLMAGICK_H__
 
 #include <cvc/types.h>
 #include <cvc/exception.h>
