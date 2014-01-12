@@ -107,6 +107,15 @@ namespace CVC_NAMESPACE
     return _max;
   }
 
+  // 01/11/2014 - Joe R. - Creation.
+  bounding_box geometry::extents() const
+  {
+    point_t min_pt = min_point();
+    point_t max_pt = max_point();
+    return bounding_box(min_pt[0],min_pt[1],min_pt[2],
+			max_pt[0],max_pt[1],max_pt[2]);
+  }
+
   uint64_t geometry::num_points() const
   {
     //TODO: throw an exception if _points.size() != _boundary.size() 

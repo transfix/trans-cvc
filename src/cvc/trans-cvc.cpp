@@ -196,6 +196,7 @@ namespace
       throw read_error("Unknown data");
   }
 
+  // 01/11/2014 - Joe R. - moved bounding box to last argument and made optional.
   void sdf(const std::vector<std::string>& args)
   {
     using namespace std;
@@ -203,12 +204,16 @@ namespace
     thread_info ti(BOOST_CURRENT_FUNCTION);
     if(args.empty())     throw command_line_error("Missing geometry filename");
     if(args.size() < 2)  throw command_line_error("Missing dimension");
-    if(args.size() < 3)  throw command_line_error("Missing bounding_box");
-    if(args.size() < 4)  throw command_line_error("Missing output volume filename");
-    sdf(geometry(args[0]),
+    if(args.size() < 3)  throw command_line_error("Missing output volume filename");
+
+    geometry geom(args[0]);
+    bounding_box bbox = geom.extents();
+    if(args.size() >= 4) bbox = bounding_box(args[3]);
+
+    sdf(geom,
         dimension(args[1]),
-        bounding_box(args[2]))
-      .write(args[3]);
+        bbox)
+      .write(args[2]);
   }
 
   void iso(const std::vector<std::string>& args)
@@ -246,10 +251,11 @@ namespace
                           "Computes isosurface geometry for a given volume and isovalue.\n"
                           "<isovalue> - value describing the surface to be computed."));                          
       commands["sdf"] = make_tuple(command_func(sdf),
-                                   string("sdf <geometry filename> <dimension> <bounding_box> <output volume filename>\n"
+                                   string("sdf <geometry filename> <dimension> <output volume filename> [bounding_box]\n"
                                           "Computes a signed distance function volume of the geometry specified."
                                           "<dimension> - comma separated list of 3 integers specifying output volume dimension\n"
-                                          "<bounding_box> - comma separated list of 6 floats specifying output volume bounding box"));
+                                          "[bounding_box] - comma separated list of 6 floats specifying output volume bounding box"
+					  "                 If unspecified, defaults to the extents of the input geometry."));
       commands["info"] = make_tuple(command_func(info),
                                     string("info <filename>\n"
                                            "Prints info about the specified file."));

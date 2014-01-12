@@ -24,6 +24,7 @@
 #define __CVCGEOM_H__
 
 #include <cvc/namespace.h>
+#include <cvc/bounding_box.h>
 
 #include <boost/cstdint.hpp>
 #include <boost/array.hpp>
@@ -121,6 +122,7 @@ namespace CVC_NAMESPACE
     
     point_t min_point() const;
     point_t max_point() const;
+    bounding_box extents() const;
 
     uint64_t num_points() const;
     uint64_t num_lines() const;

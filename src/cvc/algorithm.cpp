@@ -28,6 +28,7 @@
 #include <cvc-mesher/Mesher/mesher.h>
 
 #include <boost/any.hpp>
+#include <boost/scoped_array.hpp>
 
 #include <iostream>
 #include <cstring>
@@ -63,15 +64,16 @@ namespace
 
     float* values = 0;
     {
-      std::vector<float> v(geom.num_points()*3);
+      boost::scoped_array<float> v(new float[geom.num_points()*3]);
       for(int i = 0; i < geom.num_points(); i++)
 	for(int j = 0; j < 3; j++)
 	  v[i*3+j] = geom.points()[i][j];
-      std::vector<int> t(geom.num_tris()*3);
+      boost::scoped_array<int> t(new int[geom.num_tris()*3]);
       for(int i = 0; i < geom.num_tris(); i++)
 	for(int j = 0; j < 3; j++)
 	  t[i*3+j] = geom.tris()[i][j];
-      values = SDFLibrary::computeSDF(v.size(), &v[0], t.size(), &t[0]);
+      values = SDFLibrary::computeSDF(geom.num_points(), v.get(), 
+				      geom.num_tris(), t.get());
       if(!values) throw sign_distance_function_error("SDFLibrary::computeSDF() failed");
     }
 
@@ -135,10 +137,8 @@ namespace
 	 geo.color.end(),
 	 ret_geom.colors().begin());
     ret_geom.boundary().resize(geo.bound_sign.size());
-    for(vector<unsigned int>::const_iterator j = geo.bound_sign.begin();
-	j != geo.bound_sign.end();
-	j++)
-      ret_geom.boundary()[distance(j,geo.bound_sign.begin())] = *j;
+    for(size_t j = 0; j < geo.bound_sign.size(); j++)
+      ret_geom.boundary()[j] = geo.bound_sign[j];
     ret_geom.tris().resize(geo.triangles.size());
     copy(geo.triangles.begin(),
 	 geo.triangles.end(),
@@ -280,6 +280,12 @@ namespace CVC_NAMESPACE
     thread_info ti(BOOST_CURRENT_FUNCTION);
     Arguments args;
     args["isovalue"] = float(isovalue);
+    args["improve_iterations"] = int(0);
+
+    //need to test fastcontouring and contour lib
+    //args["extract_method"] = std::string("fastcontouring");
+    //args["extract_method"] = std::string("libisocontour");
+
     return cvc_mesher(vol,args);
   }
 
