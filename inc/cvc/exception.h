@@ -62,8 +62,6 @@ namespace CVC_NAMESPACE
   CVC_DEF_EXCEPTION(write_error);
   CVC_DEF_EXCEPTION(memory_allocation_error);
   CVC_DEF_EXCEPTION(unsupported_exception);
-  CVC_DEF_EXCEPTION(unsupported_volume_file_type);
-  CVC_DEF_EXCEPTION(unsupported_geometry_file_type);
   CVC_DEF_EXCEPTION(index_out_of_bounds);
   CVC_DEF_EXCEPTION(volume_properties_mismatch);
   CVC_DEF_EXCEPTION(volume_cache_directory_file_error);

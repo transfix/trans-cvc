@@ -48,6 +48,8 @@ namespace CVC_NAMESPACE
   // 11/16/2011 -- arand  -- Added off reader. This is not fully functional but it does
   //                         handle the most common variants of off files...
   // 12/29/2013 -- Joe R. -- Making read_off, read_raw protected, adding read function.
+  // 01/11/2014 -- Joe R. -- Added missing line_t at CVC_NAMESPACE
+  // 01/12/2014 -- Joe R. -- Moving bunny() to its own bunny_io class.
   class geometry
   {
   public:
@@ -192,20 +194,19 @@ namespace CVC_NAMESPACE
     mutable point_t _max;
   };
 
-  // 06/01/2012 - returns the classic bunny mesh
-  geometry bunny();
-
   typedef geometry::scalar_t    scalar_t;
   typedef geometry::index_t     index_t;
   typedef geometry::vector_t    vector_t;
   typedef geometry::point_t     point_t;
   typedef geometry::color_t     color_t;
+  typedef geometry::line_t      line_t;
+  typedef geometry::tri_t       tri_t;
+  typedef geometry::quad_t      quad_t;
   typedef geometry::points_t    points_t;
   typedef geometry::boundary_t  boundary_t;
   typedef geometry::normals_t   normals_t;
   typedef geometry::colors_t    colors_t;
   typedef geometry::lines_t     lines_t;
-  typedef geometry::tri_t       tri_t;
   typedef geometry::tris_t      tris_t;
   typedef geometry::quads_t     quads_t;
 }

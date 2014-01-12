@@ -27,6 +27,8 @@
 #include <cvc/volume_file_io.h>
 #include <cvc/geometry.h>
 
+#include <boost/any.hpp>
+
 #include <cmath>
 
 namespace CVC_NAMESPACE
@@ -202,6 +204,16 @@ namespace CVC_NAMESPACE
           v[0] = 1.0;
         }
     }
-}
 
+  /*
+   * save/restore utils, added 1/12/2014 - Joe R.
+   */
+  bool is_geometry(const boost::any& data);
+  bool is_volume(const boost::any& data);
+  bool is_volume_file_info(const boost::any& data);
+  bool is_geometry_filename(const std::string& filename);
+  bool is_volume_filename(const std::string& filename);
+  boost::any load(const std::string& filename);
+  void save(const boost::any& data, const std::string& filename);  
+}
 #endif

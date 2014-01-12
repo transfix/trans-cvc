@@ -252,10 +252,6 @@ namespace CVC_NAMESPACE
 	i != vfio->extensions().end();                     
 	i++)
       {
-#if 0
-	std::cerr<<BOOST_CURRENT_FUNCTION<<": inserting handler '" 
-		 << vfio->id() << "' for extension '" << *i << "'."<<std::endl;
-#endif
 	hm[*i].push_back(vfio);
       }
   }

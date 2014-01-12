@@ -1,9 +1,9 @@
 #include <cvc/app.h>
 #include <cvc/volume_file_info.h>
-#include <cvc/geometry.h>
+#include <cvc/geometry_file_io.h>
 #include <cvc/algorithm.h>
+#include <cvc/utility.h>
 
-#include <boost/regex.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/current_function.hpp>
 
@@ -15,95 +15,6 @@
 
 namespace
 {
-  /*
-   * Utils
-   */
-
-  bool is_geometry(const boost::any& data)
-  {
-    return data.type() == typeid(CVC_NAMESPACE::geometry);
-  }
-
-  bool is_volume(const boost::any& data)
-  {
-    return data.type() == typeid(CVC_NAMESPACE::volume);
-  }
-
-  bool is_volume_file_info(const boost::any& data)
-  {
-    return data.type() == typeid(CVC_NAMESPACE::volume_file_info);
-  }
-
-  bool is_geometry_filename(const std::string& filename)
-  {
-    std::string errors;
-    boost::regex file_extension("^(.*)(\\.\\S*)$");
-    boost::smatch what;
-
-    if(boost::regex_match(filename, what, file_extension))
-      if(what[2].compare(".raw") == 0 ||
-         what[2].compare(".rawn") == 0 ||
-         what[2].compare(".rawnc") == 0 ||
-         what[2].compare(".rawc") == 0 ||
-         what[2].compare(".off") == 0)
-        return true;
-    return false;
-  }
-
-  bool is_volume_filename(const std::string& filename)
-  {
-    std::string errors;
-    boost::regex file_extension("^(.*)(\\.\\S*)$");
-    boost::smatch what;
-
-    if(boost::regex_match(filename, what, file_extension))
-      {
-	std::vector<std::string> exts = 
-	  CVC_NAMESPACE::volume_file_io::getExtensions();
-	BOOST_FOREACH(std::string& ext, exts)
-	  if(what[2] == ext)
-	    return true;
-      }
-    return false;
-  }
-
-  boost::any load(const std::string& filename)
-  {
-    std::string errors;
-    boost::regex file_extension("^(.*)(\\.\\S*)$");
-    boost::smatch what;
-    
-    if(is_geometry_filename(filename))
-      {
-        CVC_NAMESPACE::geometry geo(filename);
-        return geo;
-      }
-    else if(is_volume_filename(filename))
-      {
-        CVC_NAMESPACE::volume vol(filename);
-        return vol;
-      }
-    else
-      throw CVC_NAMESPACE::read_error(BOOST_CURRENT_FUNCTION);
-
-    return boost::any();
-  }
-
-  void save(const boost::any& data, const std::string& filename)
-  {
-    if(is_geometry(data))
-      {
-        CVC_NAMESPACE::geometry geo = boost::any_cast<CVC_NAMESPACE::geometry>(data);
-        geo.write(filename);
-      }
-    else if(is_volume(data))
-      {
-        CVC_NAMESPACE::volume vol = boost::any_cast<CVC_NAMESPACE::volume>(data);
-        vol.write(filename);
-      }
-    else
-      throw CVC_NAMESPACE::write_error(BOOST_CURRENT_FUNCTION);
-  }
 
   /*
    * Commands

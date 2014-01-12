@@ -25,6 +25,7 @@
 
 #include <cvc/volume_file_info.h>
 #include <cvc/volume.h>
+#include <cvc/exception.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -37,6 +38,8 @@
 
 namespace CVC_NAMESPACE
 {
+  CVC_DEF_EXCEPTION(unsupported_volume_file_type);
+
   // --------------
   // volume_file_io
   // --------------

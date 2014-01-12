@@ -26,6 +26,7 @@ set(INCLUDE_FILES
   ../../inc/cvc/state_object.h
   ../../inc/cvc/app.h
   ../../inc/cvc/volmagick.h
+  ../../inc/cvc/geometry_file_io.h
 )
 set(SOURCE_FILES
   algorithm.cpp
@@ -33,10 +34,13 @@ set(SOURCE_FILES
   app.cpp
   bilateral_filter.cpp
   contrast_enhancement.cpp
+  cvcraw_io.cpp
   gdtv_filter.cpp
   geometry.cpp
+  geometry_file_io.cpp
   mrc_io.cpp
   null_io.cpp
+  off_io.cpp
   rawiv_io.cpp
   rawv_io.cpp
   smoothing.cpp
@@ -173,7 +177,10 @@ mark_as_advanced(CVC_APP_XML_PROPERTY_MAP)
 option(CVC_GEOMETRY_ENABLE_BUNNY "Enable built-in bunny geometry test tri mesh" ON)
 mark_as_advanced(CVC_GEOMETRY_ENABLE_BUNNY)
 if(CVC_GEOMETRY_ENABLE_BUNNY)
-  add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
+  #add_definitions(-DCVC_GEOMETRY_ENABLE_BUNNY)
+  set(SOURCE_FILES
+      ${SOURCE_FILES}
+      bunny_io.cpp)
 endif(CVC_GEOMETRY_ENABLE_BUNNY)
 
 option(CVC_GEOMETRY_CORRECT_INDEX_START "adjust indices if they start from 1 rather than 0." OFF)
