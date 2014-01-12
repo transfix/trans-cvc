@@ -37,11 +37,10 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/function.hpp>
 
+#include <vector>
+
 namespace CVC_NAMESPACE
 {
-  CVC_DEF_EXCEPTION(network_error);
-  CVC_DEF_EXCEPTION(xmlrpc_server_terminate);
-
   // ----------
   // cvc::state
   // ----------
@@ -58,14 +57,18 @@ namespace CVC_NAMESPACE
   // 03/16/2012 -- Joe R. -- Added reset(), ptree() and traverse()
   // 03/30/2012 -- Joe R. -- Added comment and hidden field.
   // 03/31/2012 -- Joe R. -- Added dataTypeName().
+  // 01/12/2014 -- Joe R. -- Added init_funcs.
   class state
   {
   public:  
     typedef boost::shared_ptr<state> state_ptr;
     typedef std::map<std::string,state_ptr> child_map;
     typedef boost::function<void (std::string)> traversal_unary_func;
+    typedef boost::function<void ()> nullary_func;
+    typedef std::vector<nullary_func> init_func_vec;
 
     static const std::string SEPARATOR;
+    static init_func_vec _startup;
 
     virtual ~state();
 
@@ -177,6 +180,9 @@ namespace CVC_NAMESPACE
     operator boost::property_tree::ptree(){ return ptree(); }
     void ptree(const boost::property_tree::ptree&);
 
+    //returns a string version of the property map
+    std::string obj();
+
     void save(const std::string& filename);
     void restore(const std::string& filename);
 
@@ -191,6 +197,8 @@ namespace CVC_NAMESPACE
     bool hidden();
     state& hidden(bool h);
     signal hiddenChanged;
+
+    static void on_startup(const nullary_func& init_func);
 
   protected:
     state(const std::string& n = std::string(),

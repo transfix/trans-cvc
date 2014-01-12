@@ -80,6 +80,9 @@ option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state shari
 mark_as_advanced(CVC_USING_XMLRPC)
 if(CVC_USING_XMLRPC)
   set(CVC_LINK_LIBS ${CVC_LINK_LIBS} xmlrpc)
+  set(SOURCE_FILES
+      ${SOURCE_FILES}
+      xmlrpc_server.cpp)
   add_definitions(-DUSING_XMLRPC)
 endif(CVC_USING_XMLRPC)
 
@@ -168,11 +171,11 @@ endif(CVC_LOG4CPLUS_DEFAULT)
 option(LOG4CPLUS_DISABLE_TRACE "Disable logging trace" OFF)
 mark_as_advanced(LOG4CPLUS_DISABLE_TRACE)
 
-option(CVC_APP_XML_PROPERTY_MAP "Read/Write XML for property map info.  If not set, uses boost INFO property tree format." OFF)
-if(CVC_APP_XML_PROPERTY_MAP)
-  add_definitions(-DCVC_APP_XML_PROPERTY_MAP)
-endif(CVC_APP_XML_PROPERTY_MAP)
-mark_as_advanced(CVC_APP_XML_PROPERTY_MAP)
+option(CVC_APP_XML_PROPERTY_TREE "Read/Write XML for property map info.  If not set, uses boost INFO property tree format." OFF)
+if(CVC_APP_XML_PROPERTY_TREE)
+  add_definitions(-DCVC_APP_XML_PROPERTY_TREE)
+endif(CVC_APP_XML_PROPERTY_TREE)
+mark_as_advanced(CVC_APP_XML_PROPERTY_TREE)
 
 option(CVC_GEOMETRY_ENABLE_BUNNY "Enable built-in bunny geometry test tri mesh" ON)
 mark_as_advanced(CVC_GEOMETRY_ENABLE_BUNNY)
@@ -488,6 +491,15 @@ if(CVC_ENABLE_SDF)
       SDF/SignDistanceFunction_v2/bufferedio.cpp
   )
 endif(CVC_ENABLE_SDF)
+
+#if poco is found, use it for the http server.
+#find_package(POCO)
+#if(POCO_FOUND)
+#  include_directories(${POCO_INCLUDE_DIRS})
+#  set(CVC_LINK_LIBS ${CVC_LINK_LIBS} ${POCO_LIBRARIES})
+#  add_definitions(-DCVC_USING_POCO)
+#  message("Poco libs: " ${POCO_LIBRARIES})
+#endif(POCO_FOUND)
 
 add_library(cvc SHARED ${SOURCE_FILES} ${INCLUDE_FILES})
 

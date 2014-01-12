@@ -1,4 +1,5 @@
 #include <cvc/app.h>
+#include <cvc/state.h>
 #include <cvc/volume_file_info.h>
 #include <cvc/geometry_file_io.h>
 #include <cvc/algorithm.h>
@@ -141,6 +142,19 @@ namespace
       .write(args[2]);
   }
 
+  void server(const std::vector<std::string>& args)
+  {
+    using namespace std;
+    using namespace boost;
+    using namespace CVC_NAMESPACE;
+    thread_info ti(BOOST_CURRENT_FUNCTION);
+    int port = 23196;
+    if(!args.empty()) port = lexical_cast<int>(args[0]);
+    cvcstate("__system.xmlrpc.port").value(port);
+    cvcstate("__system.xmlrpc").value(int(1)); //start the server
+    cvcapp.wait(); //wait for the server thread to quit
+  }
+
   class init_commands
   {
   public:
@@ -170,6 +184,9 @@ namespace
       commands["info"] = make_tuple(command_func(info),
                                     string("info <filename>\n"
                                            "Prints info about the specified file."));
+      commands["server"] = make_tuple(command_func(server),
+				      string("server [port]\n"
+					     "Starts an xmlrpc server at the specified port. Defaults to 23196"));
     }
   } static_init;
 }

@@ -25,9 +25,43 @@
 #include <cvc/app.h>
 
 #include <boost/regex.hpp>
+#include <boost/asio.hpp>
 
 namespace CVC_NAMESPACE
 {
+  CVC_DEF_EXCEPTION(network_error);
+
+  // --------------------
+  // get_local_ip_address
+  // --------------------
+  // Purpose: 
+  //   This function is kind of a hack way to get the default interface's
+  //   local ip address.  From http://bit.ly/ADIcC1
+  // ---- Change History ----
+  // 02/24/2012 -- Joe R. -- Creation.
+  std::string get_local_ip_address()
+  {
+    using namespace boost::asio;
+
+    ip::address addr;
+    try
+      {
+        io_service netService;
+        ip::udp::resolver   resolver(netService);
+        ip::udp::resolver::query query(ip::udp::v4(), "utexas.edu", "");
+        ip::udp::resolver::iterator endpoints = resolver.resolve(query);
+        ip::udp::endpoint ep = *endpoints;
+        ip::udp::socket socket(netService);
+        socket.connect(ep);
+        addr = socket.local_endpoint().address();
+      } 
+    catch (std::exception& e)
+      {
+        throw CVC_NAMESPACE::network_error(e.what());
+      }
+    return addr.to_string();
+  } 
+
   void calcGradient(std::vector<volume>& grad, const volume& vol, data_type vt)
   {
     thread_info ti(BOOST_CURRENT_FUNCTION);

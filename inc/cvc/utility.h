@@ -33,6 +33,8 @@
 
 namespace CVC_NAMESPACE
 {
+  std::string get_local_ip_address();
+
   static inline unsigned int upToPowerOfTwo(unsigned int value)
     {
       unsigned int c = 0;
