@@ -33,22 +33,11 @@
 #include <boost/format.hpp>
 #include <boost/current_function.hpp>
 #include <boost/regex.hpp>
-
-#ifndef CVC_STATE_XML_PROPERTY_TREE
-#include <boost/property_tree/info_parser.hpp>
-#else
-#include <boost/property_tree/xml_parser.hpp>
-#endif
-
-#ifdef USING_XMLRPC
-#endif
+#include <boost/property_tree/json_parser.hpp>
 
 #include <algorithm>
 #include <set>
 #include <sstream>
-
-#ifdef USING_XMLRPC
-#endif //USING_XMLRPC
 
 namespace CVC_NAMESPACE
 {
@@ -116,6 +105,7 @@ namespace CVC_NAMESPACE
   // ---- Change History ----
   // 02/18/2012 -- Joe R. -- Creation.  
   // 01/12/2014 -- Joe R. -- Added startup function calls to do initialization based on cvcstate.
+  //                         Also moved xmlrpc server thread start elsewhere.
   state::state_ptr state::instancePtr()
   {
     bool do_startup = false;
@@ -128,11 +118,6 @@ namespace CVC_NAMESPACE
 	  const std::string statekey("__state");
 	  state_ptr ptr(new state);
 	  cvcapp.data(statekey,ptr);
-
-#ifdef USING_XMLRPC
-	  //Create a new XMLRPC thread to handle IPC
-	  //cvcapp.startThread("xmlrpc_server_thread",xmlrpc_server_thread(),false);
-#endif
 	  
 	  _instance = cvcapp.data<state_ptr>(statekey);
 	  do_startup = true;
@@ -402,13 +387,14 @@ namespace CVC_NAMESPACE
     property_tree::ptree pt;
 
     boost::this_thread::interruption_point();
-    cvcapp.log(1,boost::str(boost::format("%s :: %s = %s\n")
+    cvcapp.log(6,boost::str(boost::format("%s :: %s = %s\n")
                             % BOOST_CURRENT_FUNCTION
                             % fullName()
                             % value()));
 
-    pt.push_back(property_tree::ptree::value_type(fullName(),
-                                                  property_tree::ptree(value())));
+    if(!value().empty())
+      pt.push_back(property_tree::ptree::value_type(fullName(),
+						    property_tree::ptree(value())));
     
     {
       boost::mutex::scoped_lock lock(_mutex);
@@ -446,15 +432,9 @@ namespace CVC_NAMESPACE
   //  Returns a string version of the property map.
   // ---- Change History ----
   // 01/12/2014 -- Joe R. -- Creation.
-  std::string state::obj()
+  std::string state::json()
   {
-    std::stringstream ss;
-#ifndef CVC_STATE_XML_PROPERTY_TREE
-    write_info(ss, ptree());
-#else
-    write_xml(ss, ptree());
-#endif
-    return ss.str();
+    return CVC_NAMESPACE::json(ptree());
   }
 
   // -----------
@@ -464,13 +444,10 @@ namespace CVC_NAMESPACE
   //  Saves this state object and its children to the specified filename.
   // ---- Change History ----
   // 03/16/2012 -- Joe R. -- Creation.
+  // 01/12/2014 -- Joe R. -- Forcing json.
   void state::save(const std::string& filename)
   {
-#ifndef CVC_STATE_XML_PROPERTY_TREE
-    write_info(filename, ptree());
-#else
-    write_xml(filename, ptree());
-#endif
+    write_json(filename, ptree());
   }
 
   // --------------
@@ -480,15 +457,12 @@ namespace CVC_NAMESPACE
   //  Restores this state object and its children from the specified filename.
   // ---- Change History ----
   // 03/16/2012 -- Joe R. -- Creation.
+  // 01/12/2014 -- Joe R. -- Forcing json.
   void state::restore(const std::string& filename)
   {
     using namespace boost;
     property_tree::ptree pt;
-#ifndef CVC_STATE_XML_PROPERTY_TREE
-    read_info(filename, pt);
-#else
-    read_xml(filename, pt);
-#endif
+    read_json(filename, pt);
     ptree(pt);
   }
 
@@ -614,6 +588,7 @@ namespace CVC_NAMESPACE
   // ---- Change History ----
   // 02/18/2012 -- Joe R. -- Creation.
   // 02/24/2012 -- Joe R. -- Adding regex support.
+  // 01/12/2014 -- Joe R. -- Returning empty vector if invalid regex.
   std::vector<std::string> state::children(const std::string& re)
   {
     boost::this_thread::interruption_point();
@@ -623,21 +598,31 @@ namespace CVC_NAMESPACE
       {
         if(!re.empty())
           {
-            boost::regex expression(re.c_str());
-            boost::cmatch what;
-
-            cvcapp.log(6,boost::str(boost::format("%s :: check match %s\n")
-                                    % BOOST_CURRENT_FUNCTION
-                                    % val.second->fullName()));
-
-            if(boost::regex_match(val.second->fullName().c_str(),what,expression))
-              {
-                cvcapp.log(6,boost::str(boost::format("%s :: matched! %s\n")
-                                        % BOOST_CURRENT_FUNCTION
-                                        % val.second->fullName()));
-
-                ret.push_back(val.second->fullName());
-              }
+	    try
+	      {
+		boost::regex expression(re.c_str());
+		boost::cmatch what;
+		
+		cvcapp.log(6,boost::str(boost::format("%s :: check match %s\n")
+					% BOOST_CURRENT_FUNCTION
+					% val.second->fullName()));
+		
+		if(boost::regex_match(val.second->fullName().c_str(),what,expression))
+		  {
+		    cvcapp.log(6,boost::str(boost::format("%s :: matched! %s\n")
+					    % BOOST_CURRENT_FUNCTION
+					    % val.second->fullName()));
+		    
+		    ret.push_back(val.second->fullName());
+		  }
+	      }
+	    catch(boost::bad_expression&)
+	      {
+		cvcapp.log(2,boost::str(boost::format("%s :: invalid regex '%s'\n")
+					% BOOST_CURRENT_FUNCTION
+					% re));
+		return ret;
+	      }
           }
         else
           ret.push_back(val.second->fullName());

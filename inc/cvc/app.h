@@ -94,6 +94,7 @@ namespace CVC_NAMESPACE
   // 12/16/2011 -- Joe R. -- Added save/load property map functions.
   // 02/24/2012 -- Joe R. -- Moved wait_for_threads() to app.
   // 03/31/3012 -- Joe R. -- Added boost::any dataTypeName().
+  // 01/12/2014 -- Joe R. -- Added sleep().
   class app
   {
   public:
@@ -474,6 +475,8 @@ namespace CVC_NAMESPACE
     map_change_signal mutexesChanged;
 
     void wait() { wait_for_threads(); } //non-static for convenience
+
+    void sleep(double ms);
 
   protected:
     app();

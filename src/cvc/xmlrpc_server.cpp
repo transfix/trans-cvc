@@ -168,6 +168,7 @@ namespace CVC_NAMESPACE
       while(1)
         {
           //Sleep for 200ms before each iteration.
+#if 0
           {
             CVC_NAMESPACE::thread_info ti("sleeping");
             boost::xtime xt;
@@ -175,6 +176,8 @@ namespace CVC_NAMESPACE
             xt.nsec += 1000000000 / 5;
             boost::thread::sleep( xt );
           }
+#endif
+	  cvcapp.sleep(200.0);
           
           std::vector<std::string> keys = cvcapp.data<notify_xmlrpc_thread>();
           std::vector<notify_xmlrpc_thread> threads = 
@@ -227,6 +230,7 @@ namespace CVC_NAMESPACE
       cvcstate_set_value set_value(&s);
       cvcstate_get_value get_value(&s);
       cvcstate_get_state_names get_state_names(&s);
+      cvcstate_json json(&s);
       cvcstate_terminate terminate(&s);
 
       //document the api
@@ -271,9 +275,9 @@ namespace CVC_NAMESPACE
             .value(ipaddr)
             .comment("The ip address bound by the xmlrpc server.");
  
-	  cvcapp.log(1,str(format("%s :: %s\n")
+	  cvcapp.log(1,str(format("%s :: \n%s\n")
 			   % BOOST_CURRENT_FUNCTION
-			   % cvcstate("__system").obj()));
+			   % cvcstate("__system").json()));
 
           //Start the server, and run it indefinitely.
           //For some reason, time_from_string and boost_regex creashes if the main thread is waiting in atexit().
@@ -281,8 +285,21 @@ namespace CVC_NAMESPACE
           XmlRpc::setVerbosity(0);
           s.bindAndListen(port);
           s.enableIntrospection(true);
-          s.work(-1.0);
+          //s.work(-1.0);
+
+	  //loop with interruption points so we can gracefully terminate
+	  while(1)
+	    {
+	      boost::this_thread::interruption_point();
+	      s.work(200.0); //work for 200ms
+	    }
         }
+      catch(boost::thread_interrupted&)
+	{
+          using namespace boost;
+          cvcapp.log(1,str(format("%s :: xmlrpc_server_thread shutting down\n")
+                           % BOOST_CURRENT_FUNCTION));	  
+	}
       catch(std::exception& e)
         {
           using namespace boost;
@@ -291,11 +308,20 @@ namespace CVC_NAMESPACE
         }
     }
 
+    static void shutdown()
+    {
+      cvcapp.sleep(5000.0);
+      cvcstate("__system.xmlrpc").value(int(0));
+      cvcapp.log(3,boost::str(boost::format("%s :: shutting down\n")
+			      % BOOST_CURRENT_FUNCTION));
+    }
+
   private:
     //our exported methods
     XMLRPC_METHOD_PROTOTYPE(cvcstate_set_value, "Sets a state object's value");
     XMLRPC_METHOD_PROTOTYPE(cvcstate_get_value, "Gets a state object's value");
     XMLRPC_METHOD_PROTOTYPE(cvcstate_get_state_names, "Get a list of root's children using a PERL regular expression");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_json, "Get a json representation of the requested cvcstate object.");
     XMLRPC_METHOD_PROTOTYPE(cvcstate_terminate, "Quits the server");
   };
 
@@ -307,30 +333,14 @@ namespace CVC_NAMESPACE
 
     string fullStateName = params[0];
     string stateval = params[1];
-    ptime modtime = time_from_string(params[2]);
 
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < 2; i++)
       cvcapp.log(6,str(format("%s :: params[%d] = %s\n")
                        % BOOST_CURRENT_FUNCTION
                        % i
                        % string(params[i])));
 
-    //search for a child with this state name
-    vector<string> children = cvcstate().children(fullStateName);
-
-    //if the object doesn't exist, or if the incoming value is newer, set it.
-    if(children.empty() ||
-       modtime > cvcstate(fullStateName).lastMod())
-      {
-        cvcstate(fullStateName).value(stateval);
-
-        std::vector<std::string> children = cvcstate().children();
-        BOOST_FOREACH(std::string child, children)
-          cvcapp.log(4,str(format("%s :: %s = %s\n")
-                           % BOOST_CURRENT_FUNCTION
-                           % child
-                           % cvcstate(child).value()));
-      }
+    cvcstate(fullStateName).value(stateval);
   }
 
   XMLRPC_METHOD_DEFINITION(cvcstate_get_value)
@@ -364,9 +374,17 @@ namespace CVC_NAMESPACE
 
   }
 
+  XMLRPC_METHOD_DEFINITION(cvcstate_json)
+  {
+    using namespace std;
+    using namespace boost;
+
+    result[0] = cvcstate(params[0]).json();
+  }
+
   XMLRPC_METHOD_DEFINITION(cvcstate_terminate)
   {
-    throw xmlrpc_server_terminate("Quitting...");
+    cvcapp.startThread("xmlrpc_server_thread_shutdown", shutdown);
   }
 }
 
@@ -384,12 +402,16 @@ namespace
 	     boost::lexical_cast<int>(cvcstate("__system.xmlrpc").value()))
 	    {
 	      //Create a new XMLRPC thread to handle IPC
+	      if(cvcapp.hasThread("xmlrpc_server_thread"))
+		cvcapp.threads("xmlrpc_server_thread")->interrupt();
 	      cvcapp.startThread("xmlrpc_server_thread",CVC_NAMESPACE::xmlrpc_server_thread(),false);
 	    }
 	  else
 	    {
 	      if(cvcapp.hasThread("xmlrpc_server_thread"))
-		cvcapp.threads("xmlrpc_server_thread")->interrupt();
+		{
+		  cvcapp.threads("xmlrpc_server_thread")->interrupt();
+		}
 	    }
 	}
       catch(boost::bad_lexical_cast&)

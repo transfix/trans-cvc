@@ -57,7 +57,7 @@ namespace CVC_NAMESPACE
   // 03/16/2012 -- Joe R. -- Added reset(), ptree() and traverse()
   // 03/30/2012 -- Joe R. -- Added comment and hidden field.
   // 03/31/2012 -- Joe R. -- Added dataTypeName().
-  // 01/12/2014 -- Joe R. -- Added init_funcs.
+  // 01/12/2014 -- Joe R. -- Added init_funcs and json()
   class state
   {
   public:  
@@ -180,8 +180,8 @@ namespace CVC_NAMESPACE
     operator boost::property_tree::ptree(){ return ptree(); }
     void ptree(const boost::property_tree::ptree&);
 
-    //returns a string version of the property map
-    std::string obj();
+    //returns a json version of the property map
+    std::string json();
 
     void save(const std::string& filename);
     void restore(const std::string& filename);

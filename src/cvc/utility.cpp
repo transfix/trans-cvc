@@ -27,6 +27,8 @@
 #include <boost/regex.hpp>
 #include <boost/asio.hpp>
 
+#include <sstream>
+
 namespace CVC_NAMESPACE
 {
   CVC_DEF_EXCEPTION(network_error);
@@ -186,6 +188,35 @@ namespace CVC_NAMESPACE
             }
         cvcapp.threadProgress(((float)k)/((float)((int)(volinfo.ZDim()-1))));
       }
+  }
+
+  // ----
+  // json
+  // ----
+  // Purpose: 
+  //  Given a property tree, returns a string representing a json object for that tree.
+  // ---- Change History ----
+  // 01/12/2014 -- Joe R. -- Creation.
+  std::string json(const boost::property_tree::ptree& pt)
+  {
+    std::stringstream ss;
+    write_json(ss, pt);
+    return ss.str();
+  }
+
+  // ----
+  // json
+  // ----
+  // Purpose: 
+  //  Given a json object, returns a property tree.
+  // ---- Change History ----
+  // 01/12/2014 -- Joe R. -- Creation.
+  boost::property_tree::ptree& json(const std::string& pt_str)
+  {
+    std::stringstream ss(pt_str);
+    boost::property_tree::ptree pt;
+    read_json(ss, pt);
+    return pt;
   }
 
   bool is_geometry(const boost::any& data)

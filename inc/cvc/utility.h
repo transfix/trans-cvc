@@ -28,6 +28,7 @@
 #include <cvc/geometry.h>
 
 #include <boost/any.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <cmath>
 
@@ -206,6 +207,10 @@ namespace CVC_NAMESPACE
           v[0] = 1.0;
         }
     }
+
+  // 01/12/2014 - Joe R. - Creation.
+  std::string json(const boost::property_tree::ptree& pt);
+  boost::property_tree::ptree& json(const std::string& pt_str);
 
   /*
    * save/restore utils, added 1/12/2014 - Joe R.

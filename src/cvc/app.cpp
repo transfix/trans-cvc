@@ -42,6 +42,7 @@
 #endif
 
 #include <boost/shared_array.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -49,6 +50,7 @@
 #include <algorithm>
 #include <iterator>
 #include <cstdlib>
+#include <cmath>
 
 namespace CVC_NAMESPACE
 {
@@ -457,6 +459,15 @@ namespace CVC_NAMESPACE
     if (found) {
       properties(key, listify(listProp));
     }
+  }
+
+  void app::sleep(double ms)
+  {
+    thread_info ti(BOOST_CURRENT_FUNCTION);
+    boost::xtime xt;
+    boost::xtime_get( &xt, boost::TIME_UTC );
+    xt.nsec += uint64(ms * std::pow(10.0,6.0));
+    boost::thread::sleep( xt );
   }
 
   // 12/16/2011 -- transfix -- Creation.
