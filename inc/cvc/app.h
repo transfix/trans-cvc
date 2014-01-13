@@ -354,9 +354,9 @@ namespace CVC_NAMESPACE
       //a unique key.
       if(wait && hasThread(key))
         {
-          thread_ptr t = threads(key);
-          t->interrupt(); //initiate thread quit
-          t->join();      //wait for it to quit
+          thread_ptr tptr = threads(key);
+          tptr->interrupt(); //initiate thread quit
+          tptr->join();      //wait for it to quit
         }
 
       threads(

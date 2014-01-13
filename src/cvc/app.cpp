@@ -461,6 +461,7 @@ namespace CVC_NAMESPACE
     }
   }
 
+  // 01/12/2014 -- transfix -- Creation.
   void app::sleep(double ms)
   {
     thread_info ti(BOOST_CURRENT_FUNCTION);
@@ -536,9 +537,14 @@ namespace CVC_NAMESPACE
     return thread_ptr();
   }
 
+  //01/13/2014 -- Joe R. -- interrupting the currently running thread with this key
   void app::threads(const std::string& key, const thread_ptr& val)
   {
     boost::this_thread::interruption_point();
+
+    if(hasThread(key))
+      threads(key)->interrupt();
+
     {
       boost::mutex::scoped_lock lock(_threadsMutex);
       if(!val)
@@ -547,14 +553,20 @@ namespace CVC_NAMESPACE
         _threads[key] = val;
       updateThreadKeys();
     }
+
     threadsChanged(key);
   }
 
+  //01/13/2014 -- Joe R. -- interrupting all the threads in the map
   void app::threads(const thread_map& map)
   {
     boost::this_thread::interruption_point();
     {
       boost::mutex::scoped_lock lock(_threadsMutex);
+      
+      BOOST_FOREACH(thread_map::value_type t, _threads)
+	if(t.second) t.second->interrupt();
+
       _threads = map;
       _threadProgress.clear();
       updateThreadKeys();

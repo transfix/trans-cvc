@@ -34,6 +34,7 @@
 #include <boost/current_function.hpp>
 #include <boost/regex.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <algorithm>
 #include <set>
@@ -127,7 +128,9 @@ namespace CVC_NAMESPACE
     if(do_startup)
       {
 	BOOST_FOREACH(nullary_func& init_func, _startup)
-	  init_func();
+	  {
+	    init_func();
+	  }
       }
 
     return _instance;
@@ -693,4 +696,29 @@ namespace CVC_NAMESPACE
     //cvcapp.startThread("notify_xmlrpc_thread_setup",notify_xmlrpc_thread_setup(fullName()),false);
 #endif
   }
+}
+
+namespace
+{
+  // -----------
+  // system_init
+  // -----------
+  // Purpose: 
+  //   Sets the default system settings and initial info.
+  // ---- Change History ----
+  // 01/13/2014 -- Joe R. -- Creation.  
+  class system_init
+  {
+  public:
+    static void init()
+    {
+      using namespace boost::posix_time;
+      cvcstate("__system.start").value(to_simple_string(microsec_clock::universal_time()));
+    }
+
+    system_init()
+    {
+      CVC_NAMESPACE::state::on_startup(init);
+    }
+  } static_init;
 }

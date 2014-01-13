@@ -82,6 +82,7 @@ if(CVC_USING_XMLRPC)
   set(CVC_LINK_LIBS ${CVC_LINK_LIBS} xmlrpc)
   set(SOURCE_FILES
       ${SOURCE_FILES}
+      xmlrpc_client.cpp
       xmlrpc_server.cpp)
   add_definitions(-DUSING_XMLRPC)
 endif(CVC_USING_XMLRPC)
