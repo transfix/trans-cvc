@@ -41,6 +41,7 @@ namespace CVC_NAMESPACE
   // 03/02/2012 -- Joe R. -- Running a thread to sync up with other hosts.
   // 03/10/2012 -- Joe R. -- Starting process_notify_xmlrpc_threads.
   // 01/12/2014 -- Joe R. -- Now looping to establish a listen port.
+  // 01/13/2014 -- Joe R. -- No more process_notify_xmlrpc_threads.
   class xmlrpc_server_thread
   {
   public:
@@ -53,17 +54,6 @@ namespace CVC_NAMESPACE
       //document the tree regarding the xmlrpc server
       cvcstate("__system.xmlrpc.port")
         .comment("The port used by the xmlrpc server.");
-      cvcstate("__system.xmlrpc.hosts")
-        .comment("Comma separated list of host:port combinations used to broadcast "
-                 "node changes via notify_xmlrpc_thread.");
-      cvcstate("__system.xmlrpc.notify_states")
-        .comment("Comma separated list of nodes to broadcast notification for.");
-
-#if 0
-      if(cvcstate("__system.xmlrpc.hosts").value().empty())
-        cvcstate("__system.xmlrpc.hosts")
-          .value("localhost:23196"); //loopback test for now
-#endif
 
       try
         {
@@ -90,7 +80,11 @@ namespace CVC_NAMESPACE
                 }
               catch(bad_lexical_cast&)
                 {
-                  throw xmlrpc_server_error("invalid port");
+                  //throw xmlrpc_server_error("invalid port");
+
+		  //use the default
+		  port = XMLRPC_DEFAULT_PORT;
+		  cvcstate("__system.xmlrpc.port").value(XMLRPC_DEFAULT_PORT);
                 }
               std::string portstr = cvcstate("__system.xmlrpc.port");
 
@@ -101,7 +95,12 @@ namespace CVC_NAMESPACE
                   cvcstate_set_value set_value(&s);
                   cvcstate_get_value get_value(&s);
                   cvcstate_get_children get_children(&s);
-                  cvcstate_json json(&s);
+                  cvcstate_get_num_children get_num_children(&s);
+		  cvcstate_get_json get_json(&s);
+		  cvcstate_set_json set_json(&s);
+		  cvcstate_get_lastmod lastmod(&s);
+		  cvcstate_touch touch(&s);
+		  cvcstate_reset reset(&s);
                   cvcstate_terminate terminate(&s);
                   
                   //Start the server, and run it indefinitely.
@@ -129,19 +128,19 @@ namespace CVC_NAMESPACE
                   port++;
                   cvcstate("__system.xmlrpc.port").value(port);
                 }
+	      catch(std::exception& e)
+		{
+		  using namespace boost;
+		  cvcapp.log(1,str(format("%s :: restarting server on xmlrpc_server_thread exception: %s\n")
+				   % BOOST_CURRENT_FUNCTION % e.what()));
+		}
             }
         }
       catch(boost::thread_interrupted&)
         {
           using namespace boost;
-          cvcapp.log(1,str(format("%s :: xmlrpc_server_thread shutting down\n")
+          cvcapp.log(1,str(format("%s :: xmlrpc_server_thread interrupted, shutting down\n")
                            % BOOST_CURRENT_FUNCTION));    
-        }
-      catch(std::exception& e)
-        {
-          using namespace boost;
-          cvcapp.log(1,str(format("%s :: xmlrpc_server_thread shutting down: %s\n")
-                           % BOOST_CURRENT_FUNCTION % e.what()));
         }
     }
 
@@ -155,68 +154,65 @@ namespace CVC_NAMESPACE
 
   private:
     //our exported methods
-    XMLRPC_METHOD_PROTOTYPE(cvcstate_set_value, "Sets a state object's value");
-    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_value, "Gets a state object's value");
-    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_children, "Get a list of root's children using a PERL regular expression");
-    XMLRPC_METHOD_PROTOTYPE(cvcstate_json, "Get a json representation of the requested cvcstate object.");
-    XMLRPC_METHOD_PROTOTYPE(cvcstate_terminate, "Quits the server");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_set_value, "Sets a state object's value.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_value, "Gets a state object's value.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_children, "Get a list of root's children using a PERL regular expression.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_num_children, "Returns the number of children of the requested cvcstate object.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_json, "Get a json representation of the requested cvcstate object.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_set_json, "Set a cvcstate object from a json representation.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_get_lastmod, "Returns a state's last modified time.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_touch, "Touches the state, triggering listeners as if it was written to.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_reset, "Resets the state.");
+    XMLRPC_METHOD_PROTOTYPE(cvcstate_terminate, "Quits the server.");
   };
 
   XMLRPC_METHOD_DEFINITION(cvcstate_set_value)
   {
-    using namespace std;
-    using namespace boost;
-    using namespace boost::posix_time;
-
-    string fullStateName = params[0];
-    string stateval = params[1];
-
-    for(int i = 0; i < 2; i++)
-      cvcapp.log(6,str(format("%s :: params[%d] = %s\n")
-                       % BOOST_CURRENT_FUNCTION
-                       % i
-                       % string(params[i])));
-
-    cvcstate(fullStateName).value(stateval);
+    cvcstate(params[0]).value(std::string(params[1]));
   }
 
   XMLRPC_METHOD_DEFINITION(cvcstate_get_value)
   {
-    using namespace std;
-    using namespace boost;
-    using namespace boost::posix_time;
-
-    string fullStateName = params[0];
-    result[0] = cvcstate(fullStateName).value();
-    result[1] = to_simple_string(cvcstate(fullStateName).lastMod());
-
-    cvcapp.log(6,str(format("%s :: fullStateName = %s\n")
-                     % BOOST_CURRENT_FUNCTION
-                     % fullStateName));
+    result = cvcstate(params[0]).value();
   }
 
   XMLRPC_METHOD_DEFINITION(cvcstate_get_children)
   {
     using namespace std;
-    using namespace boost;
-
     vector<string> ret = cvcstate().children(params[0]);
     for(size_t i = 0; i < ret.size(); i++)
       result[i] = ret[i];
-
-    cvcapp.log(6,str(format("%s :: cvcstate_get_children(%s): num results %d\n")
-                     % BOOST_CURRENT_FUNCTION
-                     % string(params[0])
-                     % ret.size()));
-
   }
 
-  XMLRPC_METHOD_DEFINITION(cvcstate_json)
+  XMLRPC_METHOD_DEFINITION(cvcstate_get_num_children)
   {
-    using namespace std;
-    using namespace boost;
+    result = int(cvcstate(params[0]).numChildren());
+  }
 
-    result[0] = cvcstate(params[0]).json();
+  XMLRPC_METHOD_DEFINITION(cvcstate_get_json)
+  {
+    result = cvcstate(params[0]).json();
+  }
+
+  XMLRPC_METHOD_DEFINITION(cvcstate_set_json)
+  {
+    cvcstate(params[0]).json(params[1]);
+  }
+
+  XMLRPC_METHOD_DEFINITION(cvcstate_get_lastmod)
+  {
+    result =
+      boost::posix_time::to_simple_string(cvcstate(params[0]).lastMod());
+  }
+
+  XMLRPC_METHOD_DEFINITION(cvcstate_touch)
+  {
+    cvcstate(params[0]).touch();
+  }
+
+  XMLRPC_METHOD_DEFINITION(cvcstate_reset)
+  {
+    cvcstate(params[0]).reset();
   }
 
   XMLRPC_METHOD_DEFINITION(cvcstate_terminate)

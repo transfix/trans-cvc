@@ -148,11 +148,28 @@ namespace
     using namespace boost;
     using namespace CVC_NAMESPACE;
     thread_info ti(BOOST_CURRENT_FUNCTION);
-    int port = 23196;
+    int port = XMLRPC_DEFAULT_PORT;
     if(!args.empty()) port = lexical_cast<int>(args[0]);
     cvcstate("__system.xmlrpc.port").value(port);
     cvcstate("__system.xmlrpc").value(int(1)); //start the server
     cvcapp.wait(); //wait for the server thread to quit
+  }
+
+  void client(const std::vector<std::string>& args)
+  {
+    using namespace std;
+    using namespace boost;
+    using namespace CVC_NAMESPACE;
+    thread_info ti(BOOST_CURRENT_FUNCTION);
+    if(args.empty())    throw command_line_error("Missing host:port");
+    if(args.size() < 2) throw command_line_error("Missing method name");
+    std::string host_and_port = args[0];
+    std::string method_name = args[1];
+    vector<string> rpc_args = args;
+    rpc_args.erase(rpc_args.begin(), rpc_args.begin()+2);
+    string result = rpc(host_and_port, method_name, rpc_args);
+    if(!result.empty())
+      cout << result << endl;    
   }
 
   class init_commands
@@ -177,16 +194,20 @@ namespace
                           "<isovalue> - value describing the surface to be computed."));                          
       commands["sdf"] = make_tuple(command_func(sdf),
                                    string("sdf <geometry filename> <dimension> <output volume filename> [bounding_box]\n"
-                                          "Computes a signed distance function volume of the geometry specified."
+                                          "Computes a signed distance function volume of the geometry specified.\n"
                                           "<dimension> - comma separated list of 3 integers specifying output volume dimension\n"
-                                          "[bounding_box] - comma separated list of 6 floats specifying output volume bounding box"
+                                          "[bounding_box] - comma separated list of 6 floats specifying output volume bounding box\n"
 					  "                 If unspecified, defaults to the extents of the input geometry."));
       commands["info"] = make_tuple(command_func(info),
                                     string("info <filename>\n"
                                            "Prints info about the specified file."));
       commands["server"] = make_tuple(command_func(server),
-				      string("server [port]\n"
-					     "Starts an xmlrpc server at the specified port. Defaults to 23196"));
+				      str(format(string("server [port]\n"
+							"Starts an xmlrpc server at the specified port. Defaults to %d"))
+					  % CVC_NAMESPACE::XMLRPC_DEFAULT_PORT));
+      commands["client"] = make_tuple(command_func(client),
+				      string("client <host:port> <xmlrpc_method> [method args]\n"
+					     "Calls an rpc method on the target host:port."));
     }
   } static_init;
 }

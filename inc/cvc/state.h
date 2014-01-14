@@ -58,6 +58,7 @@ namespace CVC_NAMESPACE
   // 03/30/2012 -- Joe R. -- Added comment and hidden field.
   // 03/31/2012 -- Joe R. -- Added dataTypeName().
   // 01/12/2014 -- Joe R. -- Added init_funcs and json()
+  // 01/13/2014 -- Joe R. -- Removing notifyXmlRpc() once and for all.
   class state
   {
   public:  
@@ -183,6 +184,9 @@ namespace CVC_NAMESPACE
     //returns a json version of the property map
     std::string json();
 
+    //sets this property tree based on a json
+    void json(const std::string& j);
+
     void save(const std::string& filename);
     void restore(const std::string& filename);
 
@@ -205,7 +209,6 @@ namespace CVC_NAMESPACE
           const state* p = NULL);
 
     void notifyParent(const std::string& childname);
-    void notifyXmlRpc();
 
     boost::mutex                     _mutex;
     boost::posix_time::ptime         _lastMod;

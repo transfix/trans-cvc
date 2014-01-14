@@ -77,7 +77,7 @@ namespace CVC_NAMESPACE
 
       c.execute(_method_name.c_str(), params, result);
 
-      cvcapp.data(thread_name() + "_result", result);
+      cvcapp.data(thread_name(), result);
     }
 
     const std::string& thread_name() const { return _thread_name; }
@@ -142,7 +142,6 @@ namespace CVC_NAMESPACE
 
       while(1)
         {
-          //Sleep for 200ms before each iteration.
           cvcapp.sleep(cvcstate("__system.xmlrpc_client.interval").value<double>());
           
           std::vector<std::string> keys = cvcapp.data<xmlrpc_client_thread>();
@@ -152,12 +151,72 @@ namespace CVC_NAMESPACE
             {
               if(cvcapp.hasThread(thread.thread_name()))
                 continue;
+              cvcapp.data(thread.thread_name(),boost::any()); //this will be replaced by the result
               cvcapp.startThread(thread.thread_name(),thread);
-              cvcapp.data(thread.thread_name(),boost::any()); //erase from the datamap
             }
         }
     }
   };
+
+  // --------
+  // rpc_call
+  // --------
+  // Purpose: 
+  //  Does an xmlrpc method call on the specified host and port.
+  // ---- Change History ----
+  // 01/13/2014 -- Joe R. -- Creation.
+  XmlRpc::XmlRpcValue rpc_call(const std::string& host, int port,
+                               const std::string& method_name, const XmlRpc::XmlRpcValue& params,
+                               bool sync, boost::posix_time::ptime mod_time)
+  {
+    if(sync)
+      {
+        xmlrpc_client_thread xct(host, port, method_name, params, mod_time);
+	xct();
+	return cvcapp.data<XmlRpc::XmlRpcValue>(xct.thread_name());
+      }
+    else //async calls are broken at the moment ... 01/13/2014
+      {
+        xmlrpc_client_thread xct(host, port, method_name, params, mod_time);
+        cvcapp.data(xct.thread_name(), xct);
+	return XmlRpc::XmlRpcValue();
+      }
+  }
+
+  // --------
+  // rpc_call
+  // --------
+  // Purpose: 
+  //  Does an xmlrpc method call on the specified host and port.
+  // ---- Change History ----
+  // 01/13/2014 -- Joe R. -- Creation.
+  XmlRpc::XmlRpcValue rpc_call(const std::string& host, int port,
+			       const std::string& method_name, const std::vector<std::string>& params,
+			       bool sync, boost::posix_time::ptime mod_time)
+  {
+    XmlRpc::XmlRpcValue vals;
+    int i = 0;
+    BOOST_FOREACH(const std::string& p, params)
+      vals[i++] = p;
+    return rpc_call(host, port, method_name, vals, sync, mod_time);
+  }
+
+  // ---
+  // rpc
+  // ---
+  // Purpose: 
+  //  Does an xmlrpc method call on the specified host and port.
+  // ---- Change History ----
+  // 01/13/2014 -- Joe R. -- Creation.
+  XmlRpc::XmlRpcValue rpc(const std::string& host_and_port,
+			  const std::string& method_name, const std::vector<std::string>& params,
+			  bool sync, boost::posix_time::ptime mod_time)
+  {
+    std::string host;
+    int port = -1;
+    boost::tie(host, port) = get_xmlrpc_host_and_port(host_and_port);
+    return rpc_call(host, port, method_name, params, sync, mod_time);
+  }
 }
 
 namespace
@@ -168,14 +227,16 @@ namespace
 
     static void init()
     {
+      //Sleep for 200ms before each iteration by default.
       cvcstate("__system.xmlrpc_client.interval").value(double(200.0));
       cvcapp.startThread("process_xmlrpc_client_threads",
-			 CVC_NAMESPACE::process_xmlrpc_client_threads());
+                         CVC_NAMESPACE::process_xmlrpc_client_threads());
     }
 
     process_xmlrpc_client_threads_init()
     {
-      CVC_NAMESPACE::state::on_startup(init);
+      //Need to fix async calls.  For now, disabling this thread.
+      //CVC_NAMESPACE::state::on_startup(init);
     }
   } static_init;
 }

@@ -27,8 +27,12 @@
 #include <cvc/volume_file_io.h>
 #include <cvc/geometry.h>
 
+#include <xmlrpc/XmlRpc.h>
+
 #include <boost/any.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <cmath>
 
@@ -210,7 +214,28 @@ namespace CVC_NAMESPACE
 
   // 01/12/2014 - Joe R. - Creation.
   std::string json(const boost::property_tree::ptree& pt);
-  boost::property_tree::ptree& json(const std::string& pt_str);
+  boost::property_tree::ptree json(const std::string& pt_str);
+
+  const int XMLRPC_DEFAULT_PORT = 23196;
+
+  // 01/13/2014 - Joe R. - Creation.  Implementation is in xmlrpc_client.cpp
+  XmlRpc::XmlRpcValue rpc_call(const std::string& host, int port,
+			       const std::string& method_name, const XmlRpc::XmlRpcValue& params,
+			       bool sync = true,
+			       boost::posix_time::ptime mod_time = boost::posix_time::microsec_clock::universal_time());
+
+  XmlRpc::XmlRpcValue rpc_call(const std::string& host, int port,
+			       const std::string& method_name, const std::vector<std::string>& params,
+			       bool sync = true,
+			       boost::posix_time::ptime mod_time = boost::posix_time::microsec_clock::universal_time());
+
+  XmlRpc::XmlRpcValue rpc(const std::string& url,
+			  const std::string& method_name, const std::vector<std::string>& params,
+			  bool sync = true,
+			  boost::posix_time::ptime mod_time = boost::posix_time::microsec_clock::universal_time());
+
+  // 01/13/1024 - Joe R. - Creation.
+  boost::tuple<std::string, int> get_xmlrpc_host_and_port(const std::string& host_and_port);
 
   /*
    * save/restore utils, added 1/12/2014 - Joe R.

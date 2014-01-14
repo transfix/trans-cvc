@@ -26,6 +26,8 @@
 
 #include <boost/regex.hpp>
 #include <boost/asio.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <sstream>
 
@@ -211,12 +213,41 @@ namespace CVC_NAMESPACE
   //  Given a json object, returns a property tree.
   // ---- Change History ----
   // 01/12/2014 -- Joe R. -- Creation.
-  boost::property_tree::ptree& json(const std::string& pt_str)
+  boost::property_tree::ptree json(const std::string& pt_str)
   {
     std::stringstream ss(pt_str);
     boost::property_tree::ptree pt;
     read_json(ss, pt);
     return pt;
+  }
+
+  // ------------------------
+  // get_xmlrpc_host_and_port
+  // ------------------------
+  // Purpose: 
+  //  Filters out host and port from input string. TODO: parse urls.
+  // ---- Change History ----
+  // 01/13/2014 -- Joe R. -- Creation.
+  boost::tuple<std::string, int> get_xmlrpc_host_and_port(const std::string& host_and_port)
+  {
+    using namespace std;
+    using namespace boost;
+    string host = "localhost";
+    int port = XMLRPC_DEFAULT_PORT;
+    vector<string> split_str;
+    split(split_str, host_and_port, is_any_of(":"), token_compress_on);
+    if(split_str.size() > 0)
+      {
+	host = split_str[0];
+	trim(host);
+      }
+    if(split_str.size() > 1)
+      {
+	std::string port_str = split_str[1];
+	trim(port_str);
+	port = lexical_cast<int>(port_str);
+      }
+    return boost::make_tuple(host, port);
   }
 
   bool is_geometry(const boost::any& data)

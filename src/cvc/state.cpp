@@ -58,7 +58,7 @@ namespace CVC_NAMESPACE
   // 03/02/2012 -- Joe R. -- Setting last mod to minimum date by default.
   // 03/15/2012 -- Joe R. -- Added initialized flag.
   // 03/30/2012 -- Joe R. -- Added hidden flag.
-  // 01/12/2014 -- Joe R. -- Removing notifyXmlRpc in favor of external slot
+  // 01/12/2014 -- Joe R. -- Removing notifyXmlRpc.
   state::state(const std::string& n, const state* p) :
     _name(n),
     _parent(p),
@@ -72,16 +72,6 @@ namespace CVC_NAMESPACE
         &state::notifyParent, this, _1
       )
     );
-
-#if 0
-#ifdef USING_XMLRPC
-    valueChanged.connect(
-      signal::slot_type(
-        &state::notifyXmlRpc, this
-      )
-    );
-#endif
-#endif
   }
 
   // -------------
@@ -428,16 +418,28 @@ namespace CVC_NAMESPACE
       (*this)(v.first).value(v.second.get_value<std::string>());
   }  
 
-  // ----------
-  // state::obj
-  // ----------
+  // -----------
+  // state::json
+  // -----------
   // Purpose: 
-  //  Returns a string version of the property map.
+  //  Returns a json string version of the property map.
   // ---- Change History ----
   // 01/12/2014 -- Joe R. -- Creation.
   std::string state::json()
   {
     return CVC_NAMESPACE::json(ptree());
+  }
+
+  // -----------
+  // state::json
+  // -----------
+  // Purpose: 
+  //  Sets this state object and its children based on an incoming json.
+  // ---- Change History ----
+  // 01/13/2014 -- Joe R. -- Creation.
+  void state::json(const std::string& j)
+  {
+    ptree(CVC_NAMESPACE::json(j));
   }
 
   // -----------
@@ -677,24 +679,6 @@ namespace CVC_NAMESPACE
   {
     boost::this_thread::interruption_point();
     if(parent()) parent()->childChanged(name() + SEPARATOR + childname);
-  }
-
-  // -------------------
-  // state::notifyXmlRpc
-  // -------------------
-  // Purpose: 
-  //   Used to propagate this node's changes to any network host that is listed
-  //   in the __system.xmlrpc.hosts state object's value.  This spawns threads, so
-  //   it will not block while the RPC call is being performed.
-  // ---- Change History ----
-  // 02/18/2012 -- Joe R. -- Creation.
-  // 02/20/2012 -- Joe R. -- Moved to its own thread to avoid possible deadlocks since
-  //                          we don't yet have read/RW mutexes in use yet.
-  void state::notifyXmlRpc()
-  {
-#ifdef USING_XMLRPC
-    //cvcapp.startThread("notify_xmlrpc_thread_setup",notify_xmlrpc_thread_setup(fullName()),false);
-#endif
   }
 }
 
