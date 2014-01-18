@@ -27,6 +27,7 @@
 #include <cvc/bounding_box.h>
 #include <cvc/dimension.h>
 #include <cvc/state.h>
+#include <cvc/utility.h>
 
 #ifdef USING_LOG4CPLUS_DEFAULT
 #include <log4cplus/logger.h>
@@ -43,6 +44,7 @@
 
 #include <boost/shared_array.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/xtime.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -462,11 +464,12 @@ namespace CVC_NAMESPACE
   }
 
   // 01/12/2014 -- transfix -- Creation.
+  // 01/17/2014 -- transfix -- using TIME_UTC_
   void app::sleep(double ms)
   {
     thread_info ti(BOOST_CURRENT_FUNCTION);
     boost::xtime xt;
-    boost::xtime_get( &xt, boost::TIME_UTC );
+    boost::xtime_get( &xt, boost::TIME_UTC_ );
     xt.nsec += uint64(ms * std::pow(10.0,6.0));
     boost::thread::sleep( xt );
   }

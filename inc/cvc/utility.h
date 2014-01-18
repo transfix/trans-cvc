@@ -33,8 +33,14 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/version.hpp>
+#include <boost/thread/xtime.hpp>
 
 #include <cmath>
+
+#if BOOST_VERSION < 105000
+#define TIME_UTC_ TIME_UTC
+#endif
 
 namespace CVC_NAMESPACE
 {
@@ -234,6 +240,7 @@ namespace CVC_NAMESPACE
 			  bool sync = true,
 			  boost::posix_time::ptime mod_time = boost::posix_time::microsec_clock::universal_time());
 
+  // Splits a string of the form <host>:<port>
   // 01/13/1024 - Joe R. - Creation.
   boost::tuple<std::string, int> get_xmlrpc_host_and_port(const std::string& host_and_port);
 

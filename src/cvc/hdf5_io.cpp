@@ -71,6 +71,7 @@ namespace
   // 09/30/2011 -- Joe R. -- Counting the number of steps for useful thread progress reporting.
   //                         Also added chunk_size property.
   // 10/09/2011 -- Joe R. -- Using startThread
+  // 01/17/2014 -- Joe R. -- using TIME_UTC_
   class build_hierarchy
   {
   public:
@@ -154,7 +155,7 @@ namespace
       {
         thread_info ti("sleeping");
         boost::xtime xt;
-        boost::xtime_get( &xt, boost::TIME_UTC );
+        boost::xtime_get( &xt, boost::TIME_UTC_ );
         xt.sec++;
         boost::thread::sleep( xt );
       }
