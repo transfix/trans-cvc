@@ -20,6 +20,7 @@
 #include <math.h>
 #include <mrcfiles.h>
 #include <b3dutil.h>
+#include <float.h>
 
 /* These defines are OK since all I/O in file is to MRC files */
 #if defined(WIN32_BIGFILE) || defined(MAC103_BIGFILE)

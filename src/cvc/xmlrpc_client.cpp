@@ -39,6 +39,7 @@ namespace CVC_NAMESPACE
     
     xmlrpc_client_thread& operator=(const xmlrpc_client_thread& t)
     {
+      if(this == &t) return *this;
       _thread_name = t._thread_name;
       _host = t._host;
       _port = t._port;
@@ -48,7 +49,7 @@ namespace CVC_NAMESPACE
       return *this;
     }
     
-    void operator()()
+    void operator()() const
     {
       using namespace boost;
       using namespace std;
@@ -113,7 +114,7 @@ namespace CVC_NAMESPACE
       _xct = rhs._xct;
     }
 
-    void operator()()
+    void operator()() const
     {
       CVC_NAMESPACE::thread_feedback feedback;
 
@@ -136,7 +137,7 @@ namespace CVC_NAMESPACE
   class process_xmlrpc_client_threads
   {
   public:
-    void operator()()
+    void operator()() const
     {
       CVC_NAMESPACE::thread_feedback feedback;
 

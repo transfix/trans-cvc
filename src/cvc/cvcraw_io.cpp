@@ -401,7 +401,7 @@ namespace CVC_NAMESPACE
 	cvcapp.log(3,"WARNING: file with normals requested but not available.");
       }
     
-      for(typename points_t::const_iterator i = geom.points().begin();
+      for(points_t::const_iterator i = geom.points().begin();
 	  i != geom.points().end();
 	  i++)
 	{
@@ -426,13 +426,13 @@ namespace CVC_NAMESPACE
     
       if(geom.lines().size() != 0)
 	{
-	  for(typename lines_t::const_iterator i = geom.lines().begin(); i != geom.lines().end(); i++)
+	  for(lines_t::const_iterator i = geom.lines().begin(); i != geom.lines().end(); i++)
 	    {
-	      typedef typename lines_t::value_type cell_type;
-	      for(typename cell_type::const_iterator j = i->begin(); j != i->end(); j++)
+	      typedef lines_t::value_type cell_type;
+	      for(cell_type::const_iterator j = i->begin(); j != i->end(); j++)
 		{
 		  outf << *j;
-		  if(next(j) == i->end()) outf << endl;
+		  if(boost::next(j) == i->end()) outf << endl;
 		  else outf << " ";
 		}
 
@@ -444,13 +444,13 @@ namespace CVC_NAMESPACE
 	{
 	  if(geom.boundary().size() != geom.points().size()) //if we don't have boundary info, don't treat these tris as part of a tet
 	    {
-	      for(typename tris_t::const_iterator i = geom.tris().begin(); i != geom.tris().end(); i++)
+	      for(tris_t::const_iterator i = geom.tris().begin(); i != geom.tris().end(); i++)
 		{
-		  typedef typename tris_t::value_type cell_type;
-		  for(typename cell_type::const_iterator j = i->begin(); j != i->end(); j++)
+		  typedef tris_t::value_type cell_type;
+		  for(cell_type::const_iterator j = i->begin(); j != i->end(); j++)
 		    {
 		      outf << *j;
-		      if(next(j) == i->end()) outf << endl;
+		      if(boost::next(j) == i->end()) outf << endl;
 		      else outf << " ";
 		    }
                 
@@ -473,13 +473,13 @@ namespace CVC_NAMESPACE
 	{
 	  if(geom.boundary().size() != geom.points().size()) //if we don't have boundary info, don't tread these quads as part of a hexa
 	    {
-	      for(typename quads_t::const_iterator i = geom.quads().begin(); i != geom.quads().end(); i++)
+	      for(quads_t::const_iterator i = geom.quads().begin(); i != geom.quads().end(); i++)
 		{
-		  typedef typename quads_t::value_type cell_type;
-		  for(typename cell_type::const_iterator j = i->begin(); j != i->end(); j++)
+		  typedef quads_t::value_type cell_type;
+		  for(cell_type::const_iterator j = i->begin(); j != i->end(); j++)
 		    {
 		      outf << *j;
-		      if(next(j) == i->end()) outf << endl;
+		      if(boost::next(j) == i->end()) outf << endl;
 		      else outf << " ";
 		    }
                 

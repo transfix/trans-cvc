@@ -23,6 +23,8 @@
 #ifndef __CVCNAMESPACE_H__
 #define __CVCNAMESPACE_H__
 
+#include <cvc/config.h>
+
 #ifndef CVC_NAMESPACE
 #define CVC_NAMESPACE cvc
 #endif

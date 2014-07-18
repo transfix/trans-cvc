@@ -762,7 +762,7 @@ namespace VolMagick
 	//no need to swap the extended header because we're ignoring it...
       }
 
-#warning TODO: correctly calculate the new min/max values if type is UChar or UShort
+    // TODO: correctly calculate the new min/max values if type is UChar or UShort
     //set the header's min/max values
     if(creatingNewFile)
       {

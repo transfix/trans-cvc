@@ -12,7 +12,7 @@
 #include "VolMagick.h"
 #include "endians.h"
 
-#warning TODO: modify this so I/O for spider files is out-of-core.
+// TODO: modify this so I/O for spider files is out-of-core.
 
 namespace VolMagick
 {
@@ -271,7 +271,7 @@ namespace VolMagick
     dim[2]=0;    
 
     /* Check that the filetype is correct */
-    if (filetype!='V' and filetype!='I')
+    if (filetype!='V' && filetype!='I')
       return 4;
 
     /* Open file */
@@ -432,7 +432,7 @@ namespace VolMagick
     int headrec;
 
     /* Check that the filetype is correct */
-    if (filetype!='V' and filetype!='I')
+    if (filetype!='V' && filetype!='I')
       return 4;
 
     /* Open file for writing */

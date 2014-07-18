@@ -31,7 +31,7 @@
 
 
 #ifdef WIN32
-#include <pthread.h> // arand, fix mingw problem
+//#include <pthread.h> // arand, fix mingw problem
 #endif
 
 #include <boost/thread.hpp>

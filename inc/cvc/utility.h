@@ -35,6 +35,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/version.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/asio.hpp>
 
 #include <cmath>
 

@@ -15,19 +15,19 @@ namespace CVC_NAMESPACE
   CVC_DEF_EXCEPTION(xmlrpc_server_error_listen);
   CVC_DEF_EXCEPTION(xmlrpc_server_terminate);
 
-#define XMLRPC_METHOD_PROTOTYPE(name, description)		\
-  class name : public XmlRpc::XmlRpcServerMethod		\
-  {								\
-  public:							\
-    name(XmlRpc::XmlRpcServer *s) :				\
-      XmlRpc::XmlRpcServerMethod(#name, s) {}			\
-    void execute(XmlRpc::XmlRpcValue &params,			\
-                 XmlRpc::XmlRpcValue &result);			\
-    std::string help() { return std::string(description); }	\
+#define XMLRPC_METHOD_PROTOTYPE(name, description)              \
+  class name : public XmlRpc::XmlRpcServerMethod                \
+  {                                                             \
+  public:                                                       \
+    name(XmlRpc::XmlRpcServer *s) :                             \
+      XmlRpc::XmlRpcServerMethod(#name, s) {}                   \
+    void execute(XmlRpc::XmlRpcValue &params,                   \
+                 XmlRpc::XmlRpcValue &result);                  \
+    std::string help() { return std::string(description); }     \
   };
 
-#define XMLRPC_METHOD_DEFINITION(name)					\
-  void xmlrpc_server_thread::name::execute(XmlRpc::XmlRpcValue &params,	\
+#define XMLRPC_METHOD_DEFINITION(name)                                  \
+  void xmlrpc_server_thread::name::execute(XmlRpc::XmlRpcValue &params, \
                                            XmlRpc::XmlRpcValue &result)
 
   // --------------------
@@ -47,7 +47,7 @@ namespace CVC_NAMESPACE
   public:
     xmlrpc_server_thread() {}
 
-    void operator()()
+    void operator()() const
     {
       CVC_NAMESPACE::thread_feedback feedback;
 
@@ -82,9 +82,9 @@ namespace CVC_NAMESPACE
                 {
                   //throw xmlrpc_server_error("invalid port");
 
-		  //use the default
-		  port = XMLRPC_DEFAULT_PORT;
-		  cvcstate("__system.xmlrpc.port").value(XMLRPC_DEFAULT_PORT);
+                  //use the default
+                  port = XMLRPC_DEFAULT_PORT;
+                  cvcstate("__system.xmlrpc.port").value(XMLRPC_DEFAULT_PORT);
                 }
               std::string portstr = cvcstate("__system.xmlrpc.port");
 
@@ -96,11 +96,11 @@ namespace CVC_NAMESPACE
                   cvcstate_get_value get_value(&s);
                   cvcstate_get_children get_children(&s);
                   cvcstate_get_num_children get_num_children(&s);
-		  cvcstate_get_json get_json(&s);
-		  cvcstate_set_json set_json(&s);
-		  cvcstate_get_lastmod lastmod(&s);
-		  cvcstate_touch touch(&s);
-		  cvcstate_reset reset(&s);
+                  cvcstate_get_json get_json(&s);
+                  cvcstate_set_json set_json(&s);
+                  cvcstate_get_lastmod lastmod(&s);
+                  cvcstate_touch touch(&s);
+                  cvcstate_reset reset(&s);
                   cvcstate_terminate terminate(&s);
                   
                   //Start the server, and run it indefinitely.
@@ -112,9 +112,9 @@ namespace CVC_NAMESPACE
                   s.enableIntrospection(true);
                   //s.work(-1.0);
                   
-		  cvcapp.log(1,str(format("%s :: \n%s\n")
-				   % BOOST_CURRENT_FUNCTION
-				   % cvcstate("__system").json()));
+                  cvcapp.log(1,str(format("%s :: \n%s\n")
+                                   % BOOST_CURRENT_FUNCTION
+                                   % cvcstate("__system").json()));
 
                   //loop with interruption points so we can gracefully terminate
                   while(1)
@@ -128,12 +128,12 @@ namespace CVC_NAMESPACE
                   port++;
                   cvcstate("__system.xmlrpc.port").value(port);
                 }
-	      catch(std::exception& e)
-		{
-		  using namespace boost;
-		  cvcapp.log(1,str(format("%s :: restarting server on xmlrpc_server_thread exception: %s\n")
-				   % BOOST_CURRENT_FUNCTION % e.what()));
-		}
+              catch(std::exception& e)
+                {
+                  using namespace boost;
+                  cvcapp.log(1,str(format("%s :: restarting server on xmlrpc_server_thread exception: %s\n")
+                                   % BOOST_CURRENT_FUNCTION % e.what()));
+                }
             }
         }
       catch(boost::thread_interrupted&)

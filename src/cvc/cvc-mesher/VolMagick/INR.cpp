@@ -15,8 +15,8 @@
 
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
-#include <boost/spirit.hpp>
-#include <boost/spirit/dynamic/select.hpp>
+//#include <boost/spirit.hpp>
+#include <boost/spirit/include/classic.hpp>
 
 #if 0
 #include <boost/spirit/core.hpp>
@@ -102,6 +102,7 @@ namespace VolMagick
 
   VOLMAGICK_DEF_EXCEPTION(InvalidINRHeader);
 
+#if 0
   namespace INR
   {
     //semantic actions
@@ -183,8 +184,8 @@ namespace VolMagick
 	else if(datatype_str == "unsigned fixed" && pixsize_str == "64 bits") // UInt64
 	  for(unsigned int i=0; i<vol.numVariables(); i++)
 	    vol.voxelTypes(i) = UInt64;
-	else throw_(beg,InvalidINRHeader("Unsupported type/pixsize combination: "
-					 "No 'signed fixed' types, or pixsizes < 32 bits for 'float' types"));
+	else InvalidINRHeader("Unsupported type/pixsize combination: "
+					 "No 'signed fixed' types, or pixsizes < 32 bits for 'float' types");
       }
 
       VolumeFileInfo& vol;
@@ -218,8 +219,8 @@ namespace VolMagick
 	else if(datatype_str == "unsigned fixed" && pixsize_str == "64 bits") // UInt64
 	  for(unsigned int i=0; i<vol.numVariables(); i++)
 	    vol.voxelTypes(i) = UInt64;
-	else throw_(beg,InvalidINRHeader("Unsupported type/pixsize combination: "
-					 "No 'signed fixed' types, or pixsizes < 32 bits for 'float' types"));
+	else throw InvalidINRHeader("Unsupported type/pixsize combination: "
+					 "No 'signed fixed' types, or pixsizes < 32 bits for 'float' types");
       }
 
       VolumeFileInfo& vol;
@@ -237,7 +238,7 @@ namespace VolMagick
 	  endianness = LittleEndian;
 	else if(cpu_str == "sun" || cpu_str == "sgi")
 	  endianness = BigEndian;
-	else throw_(beg,InvalidINRHeader("Invalid CPU type.  Choose one of decm, alpha, pc, sun, or sgi"));
+	else throw InvalidINRHeader("Invalid CPU type.  Choose one of decm, alpha, pc, sun, or sgi");
       }
       Endianness_t& endianness;
     };
@@ -394,9 +395,11 @@ namespace VolMagick
       };
     };
   };
+#endif
 
   void VolumeFileInfo::readINR(const std::string& file)
   {
+#if 0
     char header_c[256], buf[256];
     FILE *input;
     INR::inr_grammar g(*this);
@@ -443,6 +446,7 @@ namespace VolMagick
       {
 	
       }*/
+#endif
   }
 
   void readINR(Volume& vol,
@@ -451,8 +455,10 @@ namespace VolMagick
 	       uint64 off_x, uint64 off_y, uint64 off_z,
 	       const Dimension& subvoldim)
   {
+#if 0
     VolumeFileInfo volinfo;
     INR::inr_grammar g(volinfo);
+#endif
   }
 
   void createINR(const std::string& filename,
@@ -462,6 +468,7 @@ namespace VolMagick
 		 unsigned int numVariables, unsigned int numTimesteps,
 		 double min_time, double max_time)
   {
+#if 0
     char buf[256];
     char header[256];
 
@@ -569,6 +576,7 @@ namespace VolMagick
       }
 
     fclose(output);
+#endif
   }
 
   void writeINR(const Volume& wvol, 

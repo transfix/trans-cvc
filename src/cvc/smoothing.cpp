@@ -24,7 +24,7 @@
 
 #ifdef __APPLE__
 #define isnan(X) __inline_isnan((double)X)
-#eif defined(__WINDOWS__)
+#elif defined(__WINDOWS__)
 #define isnan(X) false
 #endif 
 

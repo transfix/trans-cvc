@@ -631,7 +631,7 @@ char** SimpleVolumeData::getVariableNames()
 double SimpleVolumeData::getDistanceOfVoxel(int i, int j, int k, int width, int height, int depth)
 {
 	//return (sqrt(((i)-width/2)*((i)-width/2)+((j)-height/2)*((j)-height/2)+((k)-depth/2)*((k)-depth/2)));
-	return (sqrt(((i)-width/2)*((i)-width/2)+((k)-depth/2)*((k)-depth/2)));
+	return (sqrt((double)((i)-width/2)*((i)-width/2)+((k)-depth/2)*((k)-depth/2)));
 	//return (sqrt((i)*(i)+(k+30)*(k+30))	);
 }
 

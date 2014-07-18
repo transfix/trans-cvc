@@ -149,7 +149,7 @@ if(CVC_USING_IMOD_MRC)
      libiimod/mrcsec.c
      libiimod/mrcslice.c
      libiimod/plist.c
-     libiimod/sliceproc.c
+     #libiimod/sliceproc.c
      libiimod/tiffstub.c
      libiimod/islice.c
      libiimod/parallelwrite.c
@@ -207,8 +207,6 @@ if(NOT DISABLE_CGAL)
     set(CVC_LINK_LIBS ${CVC_LINK_LIBS} ${GMP_LIBRARIES} ${GMPXX_LIBRARIES})
   endif(CGAL_FOUND)
 endif(NOT DISABLE_CGAL)
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/cvc/config.h.cmake ${CMAKE_BINARY_DIR}/inc/cvc/config.h )
 
 source_group("Source Files" FILES ${SOURCE_FILES})
 source_group("Header Files" FILES ${INCLUDE_FILES})
@@ -367,7 +365,7 @@ if(CVC_ENABLE_MESHER)
       cvc-mesher/VolMagick/RawIV.cpp
       cvc-mesher/VolMagick/VolMagick.cpp
       cvc-mesher/VolMagick/Spider.cpp
-      cvc-mesher/VolMagick/main.cpp
+      #cvc-mesher/VolMagick/main.cpp
       cvc-mesher/LBIE/normalspline.cpp
       cvc-mesher/LBIE/e_face.cpp
       cvc-mesher/LBIE/pcio.cpp
@@ -502,7 +500,7 @@ endif(CVC_ENABLE_SDF)
 #  message("Poco libs: " ${POCO_LIBRARIES})
 #endif(POCO_FOUND)
 
-add_library(cvc SHARED ${SOURCE_FILES} ${INCLUDE_FILES})
+add_library(cvc ${SOURCE_FILES} ${INCLUDE_FILES})
 
 SetupBoost(cvc)
 
@@ -511,3 +509,10 @@ target_link_libraries(cvc ${CVC_LINK_LIBS})
 add_executable(trans-cvc trans-cvc.cpp)
 target_link_libraries(trans-cvc cvc)
 
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/cvc/config.h.cmake ${CMAKE_BINARY_DIR}/inc/cvc/config.h )
+
+if(WIN32)
+  file(TO_NATIVE_PATH ${Boost_LIBRARY_DIRS} BOOST_LOCATION)
+  file(TO_NATIVE_PATH ${CMAKE_BINARY_DIR} BINARIES_LOCATION)
+  configure_file( trans-cvc.bat.cmake ${CMAKE_BINARY_DIR}/trans-cvc.bat )
+endif(WIN32)

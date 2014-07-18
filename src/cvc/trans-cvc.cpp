@@ -5,7 +5,8 @@
 #include <cvc/algorithm.h>
 #include <cvc/utility.h>
 
-#include <boost/tuple/tuple.hpp>
+//#include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_io.hpp>
 #include <boost/current_function.hpp>
 
 #include <vector>
@@ -178,36 +179,42 @@ namespace
     init_commands()
     {
       using namespace std;
-      using namespace boost;
+      using boost::str;
+      using boost::format;
+      using boost::make_tuple;
       
       commands["copy"] =
-        make_tuple(command_func(copy),
-                   string("copy <input filename> <output filename>\n"
-                          "Copies input to output file, possibly converting file formats."));
+        boost::make_tuple(command_func(copy),
+                          string("copy <input filename> <output filename>\n"
+                                 "Copies input to output file, possibly converting file formats."));
       commands["help"] = 
-        make_tuple(command_func(help),
-		   string("Prints command list."));
+        boost::make_tuple(command_func(help),
+                          string("Prints command list."));
       commands["iso"] = 
-        make_tuple(command_func(iso),
-                   string("iso <volume filename> <isovalue> <output geometry filename>\n"
-                          "Computes isosurface geometry for a given volume and isovalue.\n"
-                          "<isovalue> - value describing the surface to be computed."));                          
-      commands["sdf"] = make_tuple(command_func(sdf),
-                                   string("sdf <geometry filename> <dimension> <output volume filename> [bounding_box]\n"
-                                          "Computes a signed distance function volume of the geometry specified.\n"
-                                          "<dimension> - comma separated list of 3 integers specifying output volume dimension\n"
-                                          "[bounding_box] - comma separated list of 6 floats specifying output volume bounding box\n"
-					  "                 If unspecified, defaults to the extents of the input geometry."));
-      commands["info"] = make_tuple(command_func(info),
-                                    string("info <filename>\n"
-                                           "Prints info about the specified file."));
-      commands["server"] = make_tuple(command_func(server),
-				      str(format(string("server [port]\n"
-							"Starts an xmlrpc server at the specified port. Defaults to %d"))
-					  % CVC_NAMESPACE::XMLRPC_DEFAULT_PORT));
-      commands["client"] = make_tuple(command_func(client),
-				      string("client <host:port> <xmlrpc_method> [method args]\n"
-					     "Calls an rpc method on the target host:port."));
+        boost::make_tuple(command_func(iso),
+                          string("iso <volume filename> <isovalue> <output geometry filename>\n"
+                                 "Computes isosurface geometry for a given volume and isovalue.\n"
+                                 "<isovalue> - value describing the surface to be computed."));
+      commands["sdf"] = 
+        boost::make_tuple(command_func(sdf),
+                          string("sdf <geometry filename> <dimension> <output volume filename> [bounding_box]\n"
+                                 "Computes a signed distance function volume of the geometry specified.\n"
+                                 "<dimension> - comma separated list of 3 integers specifying output volume dimension\n"
+                                 "[bounding_box] - comma separated list of 6 floats specifying output volume bounding box\n"
+                                 "                 If unspecified, defaults to the extents of the input geometry."));
+      commands["info"] = 
+        boost::make_tuple(command_func(info),
+                          string("info <filename>\n"
+                                 "Prints info about the specified file."));
+      commands["server"] = 
+        boost::make_tuple(command_func(server),
+                          str(format(string("server [port]\n"
+                                                          "Starts an xmlrpc server at the specified port. Defaults to %d"))
+                              % CVC_NAMESPACE::XMLRPC_DEFAULT_PORT));
+      commands["client"] = 
+        boost::make_tuple(command_func(client),
+                          string("client <host:port> <xmlrpc_method> [method args]\n"
+                                 "Calls an rpc method on the target host:port."));
     }
   } static_init;
 }

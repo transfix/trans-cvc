@@ -493,8 +493,6 @@ namespace CVC_NAMESPACE
                            ref.const_points().end(),
                            ref.const_tris().begin(),
                            ref.const_tris().end());
-#else
-# warning geometry::project() disabled
 #endif
     return *this;
   }
