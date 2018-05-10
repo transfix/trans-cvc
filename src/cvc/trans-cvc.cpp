@@ -143,6 +143,7 @@ namespace
       .write(args[2]);
   }
 
+#ifdef USING_XMLRPC
   void server(const std::vector<std::string>& args)
   {
     using namespace std;
@@ -172,6 +173,7 @@ namespace
     if(!result.empty())
       cout << result << endl;    
   }
+#endif
 
   class init_commands
   {
@@ -206,6 +208,7 @@ namespace
         boost::make_tuple(command_func(info),
                           string("info <filename>\n"
                                  "Prints info about the specified file."));
+#ifdef USING_XMLRPC
       commands["server"] = 
         boost::make_tuple(command_func(server),
                           str(format(string("server [port]\n"
@@ -215,6 +218,7 @@ namespace
         boost::make_tuple(command_func(client),
                           string("client <host:port> <xmlrpc_method> [method args]\n"
                                  "Calls an rpc method on the target host:port."));
+#endif
     }
   } static_init;
 }
