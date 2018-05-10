@@ -13,33 +13,9 @@
 
 #include <boost/shared_array.hpp>
 
-#ifdef min
-#ifndef _MSC_VER
-#warning The macro 'min' was defined.  The volmagick library uses 'min' in the VolMagick::Voxels class and must undefine it for the definition of the class to compile correctly! Sorry!
-#endif
-#undef min
-#endif
-
-#ifdef max
-#ifndef _MSC_VER
-#warning The macro 'max' was defined.  The volmagick library uses 'max' in the VolMagick::Voxels class and must undefine it for the definition of the class to compile correctly! Sorry!
-#endif
-#undef max
-#endif
-
 #include "Exceptions.h"
 #include "Dimension.h"
 #include "BoundingBox.h"
-
-//use a safer min/max
-#if 0
-#ifndef MIN
-#define MIN(a,b) ((a)<(b)?(a):(b))
-#endif
-#ifndef MAX
-#define MAX(a,b) ((a)>(b)?(a):(b))
-#endif
-#endif
 
 namespace VolMagick
 {

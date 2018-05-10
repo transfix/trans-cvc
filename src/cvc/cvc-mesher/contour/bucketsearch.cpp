@@ -6,14 +6,11 @@
 
 // $Id: bucketsearch.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdio.h>
+#include <cstdio>
 #include <math.h>
-#include <stdlib.h>
+#include <cstdlib>
 #ifndef WIN32
 #include <unistd.h>
-#endif
-#ifndef MACOS_X
-#include <malloc.h>
 #endif
 #include <memory.h>
 #include "bucketsearch.h"

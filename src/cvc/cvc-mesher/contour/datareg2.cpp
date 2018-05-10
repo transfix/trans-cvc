@@ -8,12 +8,9 @@
 
 // $Id: datareg2.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <math.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
 #include <string.h>
 
 #ifndef WIN32
@@ -29,6 +26,8 @@
 #define FSAMPLES 256
 
 extern int verbose;
+
+using namespace std;
 
 //------------------------------------------------------------------------
 //

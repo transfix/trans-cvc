@@ -16,6 +16,10 @@
 #ifndef __IPQUEUE_H
 #define __IPQUEUE_H
 
+// changes by Joe Rivera - May 2018
+#include <chrono>
+#include <thread>
+
 #include <math.h>
 #include "basic.h"
 #include "bin.h"
@@ -31,6 +35,11 @@ template <class T, class P, class K>
 class IPqueuerec;
 template <class T, class P, class K>
 class IPhashrec;
+
+static void inline _sleep(int seconds)
+{
+  std::this_thread::sleep_for(std::chrono::seconds(seconds));
+}
 
 
 // a wrapper for the items
@@ -247,7 +256,7 @@ inline P IndexedPriorityQueue<T,P,K>::extract(T& item)
   if (verbose)
   if (!_h.remove(key)) {
      printf("failed removing from hash\n");
-     sleep(5);
+     _sleep(5);
   }
 
   // remove the item from the priority queue
@@ -277,7 +286,7 @@ inline void IndexedPriorityQueue<T,P,K>::remove(K k)
    if (!_h.remove(k)) {
      printf("failed removing from hash\n");
 #ifndef WIN32
-     sleep(5);
+     _sleep(5);
 #endif
    }
 

@@ -8,13 +8,10 @@
 
 // $Id: inttree.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdio.h>
+#include <cstdio>
 #include <math.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
 #ifndef WIN32
 #include <unistd.h>
 #endif
@@ -26,6 +23,8 @@ IntTree *global_tree = NULL;
 #define DEBUG_TREENo
 
 extern int verbose;
+
+using namespace std;
 
 //----------------------------------------------------------------
 //

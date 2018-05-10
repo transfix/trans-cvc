@@ -12,13 +12,12 @@
 // $Id: contour3d.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
+#include <cstdio>
+#include <cstdlib>
 
 #include "contour3d.h"
+
+using namespace std;
 
 //#define WRITE_TMESH
 //#define WRITE_IPOLY

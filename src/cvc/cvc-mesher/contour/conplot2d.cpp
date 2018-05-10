@@ -8,10 +8,7 @@
 
 // $Id: conplot2d.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdlib.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
+#include <cstdlib>
 #include <memory.h>
 #include <string.h>
 #ifndef WIN32
@@ -23,6 +20,8 @@
 #include "range.h"
 #include "segtree.h"
 #include "conplot2d.h"
+
+using namespace std;
 
 extern int verbose;
 extern void (*errorHandler)(char *, int);

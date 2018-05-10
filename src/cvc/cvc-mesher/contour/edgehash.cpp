@@ -10,19 +10,18 @@
 
 // $Id: edgehash.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
+#include <cmath>
 #include <memory.h>
-#include <stdlib.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
+#include <cstdlib>
 #include "edgehash.h"
 
 // use a small prime # of buckets
 #define NBUCKETS 3001
 
 extern int verbose;
+
+using namespace std;
 
 //----------------------------------------------------------------------
 //

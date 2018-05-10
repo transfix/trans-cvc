@@ -22,11 +22,7 @@
 #define         SMOOTHING
 //#define       PERTURB_2
 
-#ifdef __APPLE__
-#define isnan(X) __inline_isnan((double)X)
-#elif defined(__WINDOWS__)
-#define isnan(X) false
-#endif 
+using std::isnan;
 
 namespace
 {

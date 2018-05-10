@@ -759,7 +759,7 @@ namespace CVC_NAMESPACE
     using namespace std;
     using namespace boost;
     using namespace boost::algorithm;
-    mutex::scoped_lock lock(_logMutex);
+    boost::mutex::scoped_lock lock(_logMutex);
     unsigned int log_verbosity =
       hasProperty("system.log_verbosity") ?
       properties<unsigned int>("system.log_verbosity") :

@@ -7,11 +7,10 @@
 
 // $Id: seedcells.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
-#include <stdlib.h>
+#include <cstdlib>
 #include "seedcells.h"
+
+using namespace std;
 
 //------------------------------------------------------------
 //

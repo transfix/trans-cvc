@@ -38,13 +38,8 @@
 #include <windows.h>
 #endif
 
-#if defined(__APPLE__)
-# include <gl.h>
-# include <glu.h>
-#else
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 class SceneArrayNode
 {

@@ -76,7 +76,7 @@ add_definitions(-DCVC_VERSION_STRING=\"${CVC_VERSION}\")
 
 set(CVC_LINK_LIBS "")
 
-option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" ON)
+option(CVC_USING_XMLRPC "If this is enabled, cvc::state will support state sharing with other processes on the network" OFF)
 mark_as_advanced(CVC_USING_XMLRPC)
 if(CVC_USING_XMLRPC)
   set(CVC_LINK_LIBS ${CVC_LINK_LIBS} xmlrpc)
@@ -87,7 +87,7 @@ if(CVC_USING_XMLRPC)
   add_definitions(-DUSING_XMLRPC)
 endif(CVC_USING_XMLRPC)
 
-option(CVC_USING_HDF5 "HDF5 Support. Needed for *.cvc format but requires linking to libhdf5." ON)
+option(CVC_USING_HDF5 "HDF5 Support. Needed for *.cvc format but requires linking to libhdf5." OFF)
 mark_as_advanced(CVC_USING_HDF5)
 if(CVC_USING_HDF5)
   find_package(HDF5 COMPONENTS C CXX)

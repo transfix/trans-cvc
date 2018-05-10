@@ -196,14 +196,14 @@ namespace CVC_NAMESPACE
   } SpiderHeader;
 
   // -----
-  // FREAD
+  // _FREAD
   // -----
   // Purpose:
   //   Reads from a file stream to a buffer, swapping bytes if reverse is non-zero.
   //   Meant for reading single fields.
   // ---- Change History ----
   // ??/??/2008 -- Joe R. -- Creation.
-  size_t FREAD(void *dest, size_t size, size_t nitems, FILE *&fp, int reverse)
+  size_t _FREAD(void *dest, size_t size, size_t nitems, FILE *&fp, int reverse)
   {
 #if 0
     size_t retval;
@@ -378,10 +378,10 @@ namespace CVC_NAMESPACE
       }
     else
       {
-	FREAD(&header,             sizeof(float),  36, fp, true);
-	FREAD(&header.fGeo_matrix, sizeof(double),  9, fp, true);
-	FREAD(&header.fAngle1,     sizeof(float),  13, fp, true);
-	FREAD(&header.fNada2,      sizeof(char),  756, fp, true);
+	_FREAD(&header,             sizeof(float),  36, fp, true);
+	_FREAD(&header.fGeo_matrix, sizeof(double),  9, fp, true);
+	_FREAD(&header.fAngle1,     sizeof(float),  13, fp, true);
+	_FREAD(&header.fNada2,      sizeof(char),  756, fp, true);
       }
 
     /* Compute file size, header size and volume dimensions */
@@ -448,7 +448,7 @@ namespace CVC_NAMESPACE
     *data=(float *) malloc(volSize*sizeof(float));
     ptr=*data;
     for (n=0; n<volSize; n++)
-      FREAD(ptr++, sizeof(float), 1, fp, reversed);
+      _FREAD(ptr++, sizeof(float), 1, fp, reversed);
 
     /* Close file */
     fclose(fp);

@@ -8,15 +8,14 @@
 
 // $Id: segtree.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdio.h>
+#include <cstdio>
 #include <math.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
 #include <memory.h>
 #include "segtree.h"
 
 extern int verbose; 
+
+using namespace std;
 
 //----------------------------------------------------------------
 //

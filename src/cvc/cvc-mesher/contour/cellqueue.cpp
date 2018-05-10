@@ -13,7 +13,8 @@
 #include <math.h>
 #include <memory.h>
 #include <string.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
+#include <cstdlib>
+
+using namespace std;
+
 #include "cellqueue.h"

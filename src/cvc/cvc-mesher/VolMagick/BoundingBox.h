@@ -129,12 +129,12 @@ namespace VolMagick
 	if(rhs.isNull() && isNull()) return *this;
 
 	GenericBoundingBox<T> ret;
-	ret.minx = MIN(minx,rhs.minx);
-	ret.miny = MIN(miny,rhs.miny);
-	ret.minz = MIN(minz,rhs.minz);
-	ret.maxx = MAX(maxx,rhs.maxx);
-	ret.maxy = MAX(maxy,rhs.maxy);
-	ret.maxz = MAX(maxz,rhs.maxz);
+	ret.minx = std::min(minx,rhs.minx);
+	ret.miny = std::min(miny,rhs.miny);
+	ret.minz = std::min(minz,rhs.minz);
+	ret.maxx = std::max(maxx,rhs.maxx);
+	ret.maxy = std::max(maxy,rhs.maxy);
+	ret.maxz = std::max(maxz,rhs.maxz);
 
 	return ret;
       }
@@ -149,12 +149,12 @@ namespace VolMagick
 	  }
 	if(rhs.isNull() && isNull()) return *this;
 
-	minx = MIN(minx,rhs.minx);
-	miny = MIN(miny,rhs.miny);
-	minz = MIN(minz,rhs.minz);
-	maxx = MAX(maxx,rhs.maxx);
-	maxy = MAX(maxy,rhs.maxy);
-	maxz = MAX(maxz,rhs.maxz);
+	minx = std::min(minx,rhs.minx);
+	miny = std::min(miny,rhs.miny);
+	minz = std::min(minz,rhs.minz);
+	maxx = std::max(maxx,rhs.maxx);
+	maxy = std::max(maxy,rhs.maxy);
+	maxz = std::max(maxz,rhs.maxz);
 	
 	return *this;
       }

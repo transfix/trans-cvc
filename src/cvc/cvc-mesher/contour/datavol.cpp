@@ -8,10 +8,8 @@
 
 // $Id: datavol.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdio.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
+#include <cstdio>
+#include <cstdlib>
 #include <string.h>
 
 #include "datavol.h"

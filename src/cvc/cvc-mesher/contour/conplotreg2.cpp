@@ -7,10 +7,7 @@
 
 // $Id: conplotreg2.cpp,v 1.1.1.1 2006/10/11 21:25:51 transfix Exp $
 
-#include <stdlib.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
+#include <cstdlib>
 #include <memory.h>
 #include <string.h>
 #ifndef WIN32
@@ -25,6 +22,8 @@
 
 extern int verbose;
 extern void (*errorHandler)(char *, int);
+
+using namespace std;
 
 //------------------------------------------------------------------------
 //

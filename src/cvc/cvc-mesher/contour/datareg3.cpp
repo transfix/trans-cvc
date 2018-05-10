@@ -9,9 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifndef MACOS_X
-#include <malloc.h>
-#endif
 #include <string.h>
 
 #ifndef WIN32
