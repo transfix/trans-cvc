@@ -285,7 +285,8 @@ private:
   void seedOwnState();
   bool buildSnapshot(snapshot &out); // owner thread; false when not renderable yet
   void applyFrame(const cvc::volren::frame &f, const snapshot &snap); // owner thread
-  void pushDepthUniforms();                                           // owner thread, every tick
+  void poseQuad(const snapshot &snap); // owner thread; every tick, hugs the live camera
+  void pushDepthUniforms();            // owner thread, every tick
   void ensureQuad();
   void launchOrRun(const snapshot &snap);
 
@@ -313,6 +314,8 @@ private:
   // GL-side resources (owner thread only).
   cvc::image m_colorImage; // persistent aliased texture buffer
   vtkSmartPointer<vtkTextureObject> m_depthTexture;
+  vtkSmartPointer<vtkTextureObject>
+      m_colorTexObj; // raycast RGBA, sampled by our shader (wasm-safe)
   bool m_quadReady = false;
   bool m_frameAppliedSinceTick = false;
 };
