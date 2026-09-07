@@ -148,7 +148,8 @@ inline float ipc_dbdd(float d, float d_hat) {
   const float dc = d < 1e-6f ? 1e-6f : d; // clamp_min(1e-6)
   if (!(dc < d_hat))
     return 0.0f; // where(d < d_hat, val, 0)
-  return (d_hat - dc) * (2.0f * std::log(dc / d_hat) - d_hat / dc) + 1.0f;
+  // M10: analytic b' (was +（d-dh)+1, an attraction band).
+  return -(2.0f * (dc - d_hat) * std::log(dc / d_hat) + (dc - d_hat) * (dc - d_hat) / dc);
 }
 
 } // namespace

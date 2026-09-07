@@ -74,22 +74,22 @@ CVC_HD inline float silu_grad_(float x) {
 }
 CVC_HD inline float softplusf_(float x) { return x > 20.0f ? x : log1pf(expf(x)); }
 
-// IPC barrier derivative (ipc_dbdd, drive.cpp) and its d/dd.
+// IPC barrier derivative b' (ipc_dbdd, drive.cpp) and its d/dd (= b''). M10.
 CVC_HD inline float ipc_(float d, float d_hat) {
   const float dc = d < 1e-6f ? 1e-6f : d;
   if (!(dc < d_hat))
     return 0.0f;
-  return (d_hat - dc) * (2.0f * logf(dc / d_hat) - d_hat / dc) + 1.0f;
+  // M10: analytic b' of b(d)=-(d-dh)^2 ln(d/dh) (was +（d-dh)+1, an attraction band).
+  return -(2.0f * (dc - d_hat) * logf(dc / d_hat) + (dc - d_hat) * (dc - d_hat) / dc);
 }
 CVC_HD inline float ipc_grad_(float d, float d_hat) {
   if (d < 1e-6f)
     return 0.0f;
   if (!(d < d_hat))
     return 0.0f;
-  const float A = d_hat - d;
-  const float B = 2.0f * logf(d / d_hat) - d_hat / d;
-  const float dB = 2.0f / d + d_hat / (d * d);
-  return -B + A * dB;
+  // M10: b'' = d/dd of the corrected dbdd (= b'); verified vs autograd.
+  const float A = d - d_hat;
+  return -2.0f * logf(d / d_hat) - 4.0f * A / d + A * A / (d * d);
 }
 
 CVC_HD inline sample sample_fwd(const field &f, float onx, float ony) {
