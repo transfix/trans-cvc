@@ -30,6 +30,8 @@ namespace {
 // `usesEdgeValues` in it -- eating the anchor made every fragment shader fail
 // to compile in the browser while the desktop build stayed green.
 const char *kDepthUniformsDec = "uniform sampler2D volrenDepthTex;\n"
+                                "uniform sampler2D volrenColorTex;\n"
+                                "uniform vec3 volrenViewport;\n"
                                 "uniform float volrenNear;\n"
                                 "uniform float volrenFar;\n"
                                 "uniform int volrenPersp;\n"
@@ -46,7 +48,16 @@ const char *kDepthUniformsDec = "uniform sampler2D volrenDepthTex;\n"
 // write.
 const char *kDepthImpl =
     "//VTK::Depth::Impl\n"
-    "  float vrEyeDepth = texture(volrenDepthTex, tcoordVCVSOutput).r;\n"
+    // The quad is a screen-filling billboard (poseQuad sizes it to the frustum),
+    // so the raycast texel under this fragment is its normalized window position.
+    // Deriving the UV from gl_FragCoord -- rather than a VTK texcoord varying --
+    // is what keeps this working under the wasm/GLES mapper, which does NOT emit
+    // tcoordVCVSOutput for this actor (empty //VTK::TCoord::Dec): referencing it
+    // failed the whole fragment shader to compile and fell back to a flat quad.
+    // Y is flipped: the raycast image is top-left origin, gl_FragCoord is bottom.
+    "  vec2 vrUV = vec2(gl_FragCoord.x, volrenViewport.y - gl_FragCoord.y) / "
+    "volrenViewport.xy;\n"
+    "  float vrEyeDepth = texture(volrenDepthTex, vrUV).r;\n"
     "  float vrZ;\n"
     "  if (volrenPersp == 1)\n"
     "    vrZ = volrenFar / (volrenFar - volrenNear) * (1.0 - volrenNear / vrEyeDepth);\n"
@@ -73,9 +84,19 @@ const char *kDepthImpl =
 // exactly because the node draws this quad unlit at opacity 1 (see the
 // constructor).  A quad at any other opacity would have that opacity divided
 // straight back out.
-const char *kUnpremultiplyImpl = "//VTK::TCoord::Impl\n"
-                                 "  if (gl_FragData[0].a > 0.0)\n"
-                                 "    gl_FragData[0].rgb /= gl_FragData[0].a;\n";
+const char *kUnpremultiplyImpl =
+    "//VTK::TCoord::Impl\n"
+    // Sample the raycast colour OURSELVES from the same screen-space UV, rather
+    // than leaning on VTK's texture path: the wasm/GLES mapper leaves this
+    // actor's //VTK::TCoord::Dec/Impl empty, so VTK never sampled the image at
+    // all (the quad showed flat material colour).  Straight-alpha result; the
+    // premultiplied RGB is divided back out here (bilinear filtering is only
+    // linear in premultiplied space -- see the note below).  Alpha-0 texels are
+    // discarded by the template's alpha test that follows.
+    "  vec2 vrUVc = vec2(gl_FragCoord.x, volrenViewport.y - gl_FragCoord.y) / "
+    "volrenViewport.xy;\n"
+    "  vec4 vrCol = texture(volrenColorTex, vrUVc);\n"
+    "  gl_FragData[0] = (vrCol.a > 0.0) ? vec4(vrCol.rgb / vrCol.a, vrCol.a) : vec4(0.0);\n";
 
 cvc::volren::mat4 to_mat4(vtkMatrix4x4 *m) {
   cvc::volren::mat4 out;
@@ -623,6 +644,8 @@ void VolRenNode::pushDepthUniforms() {
   setShaderUniformf("volrenNear", float(clip[0]));
   setShaderUniformf("volrenFar", float(clip[1]));
   setShaderUniformi("volrenPersp", cam->GetParallelProjection() ? 0 : 1);
+  if (const int *sz = m_renderer->GetSize())
+    setShaderUniform3f("volrenViewport", float(std::max(1, sz[0])), float(std::max(1, sz[1])), 0.f);
 }
 
 void VolRenNode::ensureQuad() {
@@ -651,19 +674,14 @@ void VolRenNode::ensureQuad() {
   m_quadReady = true;
 }
 
-void VolRenNode::applyFrame(const cvc::volren::frame &f, const snapshot &snap) {
-  const cvc::image &color = f.color;
-  const cvc::image &depth = f.depth;
-  const int w = color.width();
-  const int h = color.height();
-  if (w < 1 || h < 1)
-    return;
-
+// Pose the billboard across the LIVE camera's frustum, at the distance of the
+// composed volume centre.  Called every tick (not only when a fresh raycast
+// lands) so during camera motion the quad keeps hugging the current view
+// instead of showing the last raycast camera's frustum skewed into the new
+// one -- the "you can see the quad distort" artifact on threaded builds.
+// gl_FragDepth still supplies the real per-pixel depth.
+void VolRenNode::poseQuad(const snapshot &snap) {
   ensureQuad();
-
-  // Re-pose the quad across the raycast camera's frustum at the distance of
-  // the scene bounds' center, so the image stays world-anchored (and sorts
-  // sanely among translucent actors).  gl_FragDepth supplies the real depth.
   {
     const cvc::volren::view_basis basis = snap.cam.basis();
     const cvc::volren::vec3d eye(snap.cam.eye);
@@ -702,6 +720,21 @@ void VolRenNode::applyFrame(const cvc::volren::frame &f, const snapshot &snap) {
     }
     updateVertices(xyz);
   }
+}
+
+void VolRenNode::applyFrame(const cvc::volren::frame &f, const snapshot &snap) {
+  const cvc::image &color = f.color;
+  const cvc::image &depth = f.depth;
+  const int w = color.width();
+  const int h = color.height();
+  if (w < 1 || h < 1)
+    return;
+
+  // The quad is posed every tick by poseQuad() against the LIVE camera, so it
+  // always hugs the current frustum (bug: a billboard posed for the raycast
+  // camera and viewed from a moved camera reads as a skewed, visible quad).
+  // applyFrame only refreshes the texture the quad shows.
+  ensureQuad();
 
   // Color: copy the frame VERBATIM into the persistent aliased buffer.  The
   // raycaster's background is black, so its RGB is already premultiplied by
@@ -734,6 +767,24 @@ void VolRenNode::applyFrame(const cvc::volren::frame &f, const snapshot &snap) {
       m_depthTexture->SetMinificationFilter(vtkTextureObject::Nearest);
       m_depthTexture->SetMagnificationFilter(vtkTextureObject::Nearest);
       setShaderTexture("volrenDepthTex", m_depthTexture);
+      // Colour: upload as an RGBA8 custom texture and sample it ourselves in the
+      // shader.  VTK's built-in per-actor texture path is empty under the wasm
+      // mapper (//VTK::TCoord::Dec/Impl come back blank), so the built-in colour
+      // texture never reaches the fragment shader there -- the quad showed flat
+      // material colour and, worse, our depth code referenced the resulting-
+      // undeclared tcoordVCVSOutput and failed the whole shader to compile.
+      // LINEAR filtering keeps the premultiplied-alpha bilinear read correct.
+      if (!m_colorTexObj) {
+        m_colorTexObj = vtkSmartPointer<vtkTextureObject>::New();
+        m_colorTexObj->SetContext(oglWin);
+      }
+      m_colorTexObj->Create2DFromRaw(static_cast<unsigned int>(w), static_cast<unsigned int>(h), 4,
+                                     VTK_UNSIGNED_CHAR, const_cast<unsigned char *>(color.data()));
+      m_colorTexObj->SetWrapS(vtkTextureObject::ClampToEdge);
+      m_colorTexObj->SetWrapT(vtkTextureObject::ClampToEdge);
+      m_colorTexObj->SetMinificationFilter(vtkTextureObject::Linear);
+      m_colorTexObj->SetMagnificationFilter(vtkTextureObject::Linear);
+      setShaderTexture("volrenColorTex", m_colorTexObj);
     }
   }
 
@@ -772,6 +823,10 @@ bool VolRenNode::tick() {
   snapshot snap;
   if (!buildSnapshot(snap))
     return false;
+
+  // Keep the billboard hugging the LIVE camera every frame, decoupled from
+  // raycast arrival, so motion never shows a skewed/edge-visible quad.
+  poseQuad(snap);
 
   const bool camera_changed = snap.camera_key != m_appliedCamera || snap.cam.width != m_appliedW ||
                               snap.cam.height != m_appliedH;
