@@ -111,9 +111,16 @@ struct train_config {
   // centered on, not from-scratch learning: the point-mass training surrogate
   // has no turning limits, so a large step drives the goal-spring far higher than
   // the deployment bicycle can execute and wrecks navigation. Empirically (city
-  // scene, sim_world reach) 2e-4 refines the basin and IMPROVES reach; 1e-3
-  // (coef_train.py's never-validated default) collapses it. Lower is safer.
-  float lr = 2e-4f;
+  // scene, sim_world reach) lower is safer; 1e-3 (coef_train.py's never-validated
+  // default) collapses it.
+  //
+  // M10: the corrected IPC barrier (b' = analytic derivative, no +（d-dh)+1
+  // attraction band) is steeper near the wall (b'' carries 1/d^2), so its
+  // obstacle-gradient is larger and the old 2e-4 now overshoots -- it DEGRADES
+  // reach from 71% to 26%. The lr sweep under the corrected barrier: 1e-4 -> 70%,
+  // 5e-5 -> 71%, 2e-5 -> 72% (improves), vs 2e-4 -> 26%. 5e-5 sits in the middle
+  // of the safe band with margin. (The pre-M10 2e-4 was tuned to the buggy barrier.)
+  float lr = 5e-5f;
   // The safety-for-reach dial, NOT a hyperparameter to tune away. Both loss
   // terms are normalized to O(1) (goal distance by the world half-extent, the
   // penalty by d_safe), so this expresses a preference directly. Measured on
