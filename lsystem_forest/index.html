@@ -106,7 +106,11 @@
       statusEl.textContent = 'Aborted: ' + what;
     },
   };
-  const V = Date.parse(document.lastModified) || 0;
+  // Cache-buster keyed to the ACTUAL wasm content (a short hash baked in at
+  // page-generation time), not document.lastModified: build-pages.py emits
+  // byte-identical index.html each deploy, so its mtime never moves and the old
+  // value froze -- browsers then served a stale, cached .wasm forever.
+  const V = 'f509c1e73662';
   async function boot() {
     try {
       const resp = await fetch(DEMO + '.wasm?v=' + V, {cache: 'no-cache'});
