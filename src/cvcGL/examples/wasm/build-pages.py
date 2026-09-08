@@ -18,6 +18,7 @@ reuse the same discovery/layout.
 """
 import argparse
 import json
+import hashlib
 import math
 import shutil
 import sys
@@ -96,6 +97,7 @@ def main() -> int:
         # per-demo page
         wasm = args.bin / (demo + ".wasm")
         wasm_mb = max(1, math.ceil(wasm.stat().st_size / 1048576))
+        asset_v = hashlib.sha256(wasm.read_bytes()).hexdigest()[:12]
         ddir = args.out / demo
         ddir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(wasm, ddir / (demo + ".wasm"))
@@ -105,6 +107,7 @@ def main() -> int:
             DEMO=demo,
             DESC=info.get("desc", "a cvcGL WebAssembly example"),
             WASM_MB=wasm_mb,
+            ASSET_V=asset_v,
         ))
 
         # gallery card
