@@ -43,7 +43,7 @@ vtk_module_autoinit(TARGETS lsystem_coast MODULES ${VTK_LIBRARIES})
 add_library(nav_demo_common STATIC nav_common.cpp)
 target_link_libraries(nav_demo_common PUBLIC cvcGL)
 
-foreach(_demo nav_city_swarm nav_fog_ghost nav_finale)
+foreach(_demo nav_city_swarm nav_fog_ghost nav_finale nav_austin_live)
   add_executable(${_demo} ${_demo}.cpp)
   target_link_libraries(${_demo} PRIVATE nav_demo_common cvcGL ${VTK_LIBRARIES}
                         Boost::program_options)
@@ -124,7 +124,7 @@ endif()
 # deps-prefix link dirs too, which cvcpkg's rewrite-install-paths relocates to
 # $ORIGIN-relative. cvcgl-examples is its own install COMPONENT so the recipe can
 # `cmake --install --component cvcgl-examples` and get only the bins (not the cvcGL SDK).
-set(_cvcgl_example_bins lsystem_forest lsystem_coast bunny_shadow volren_bunny volslice_bunny nav_city_swarm nav_fog_ghost nav_finale)
+set(_cvcgl_example_bins lsystem_forest lsystem_coast bunny_shadow volren_bunny volslice_bunny nav_city_swarm nav_fog_ghost nav_finale nav_austin_live)
 set_target_properties(${_cvcgl_example_bins} PROPERTIES
   INSTALL_RPATH "$ORIGIN/../lib"
   INSTALL_RPATH_USE_LINK_PATH ON)
