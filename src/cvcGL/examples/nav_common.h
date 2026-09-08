@@ -118,6 +118,13 @@ public:
   // that agent's world (x,y)), so a flat-ground template rests on real terrain.
   const std::vector<double> &pack_z(const float *pos_world, const float *heading,
                                     const double *z_off);
+  // Full terrain-conforming pose: each instance is rotated by a 3x3 world basis
+  // (`basis` is [9*n]: {fx,fy,fz, sx,sy,sz, ux,uy,uz} per instance — its world
+  // forward/side/up axes) and translated to (pos_world[i], z[i]). Yaw comes from
+  // the forward axis, pitch+roll from the up axis (the terrain surface normal), so
+  // a vehicle sits ON a slope with its wheels on the ground, not yaw-only-flat.
+  const std::vector<double> &pack_basis(const float *pos_world, const double *z,
+                                        const double *basis);
 
   // LOD pack: transform only the `count` agents named by `idx[0..count)` into the
   // first `count` slots (each at its own world pose from pos_world/heading/z_off,

@@ -268,6 +268,27 @@ const std::vector<double> &AgentGlyphs::pack_z(const float *pos_world, const flo
   return xyz_;
 }
 
+const std::vector<double> &AgentGlyphs::pack_basis(const float *pos_world, const double *z,
+                                                   const double *basis) {
+  // Full per-instance orientation: rotate the template by a 3x3 world basis (its
+  // columns are the instance's world forward / side / up axes) then translate to
+  // (pos_world, z). This is how a vehicle conforms to terrain — yaw from heading,
+  // pitch+roll from the surface normal — instead of yaw-only (pack_z). `basis` is
+  // [9*n]: {fx,fy,fz, sx,sy,sz, ux,uy,uz} per instance, each a unit world vector.
+  for (int i = 0; i < n_; ++i) {
+    const double ox = pos_world[2 * i], oy = pos_world[2 * i + 1], oz = z ? z[i] : 0.0;
+    const double *R = basis + static_cast<std::size_t>(9) * i;
+    for (int k = 0; k < v_; ++k) {
+      const double lx = tmpl_[3 * k], ly = tmpl_[3 * k + 1], lz = tmpl_[3 * k + 2] + z_;
+      const std::size_t o = (static_cast<std::size_t>(i) * v_ + k) * 3;
+      xyz_[o + 0] = ox + R[0] * lx + R[3] * ly + R[6] * lz;
+      xyz_[o + 1] = oy + R[1] * lx + R[4] * ly + R[7] * lz;
+      xyz_[o + 2] = oz + R[2] * lx + R[5] * ly + R[8] * lz;
+    }
+  }
+  return xyz_;
+}
+
 const std::vector<double> &AgentGlyphs::pack_lod(const float *pos_world, const float *heading,
                                                  const double *z_off, const std::uint32_t *idx,
                                                  int count) {
@@ -485,8 +506,12 @@ bool load_vehicle_template(const std::string &path, double target_len, std::vect
       const double meanTopNeg = std::abs(sum_top_neg / tt_neg);
       lower_top = (meanTopPos < meanTopNeg) ? +1 : -1;
     }
-    // Combine: if both agree, use them. If they disagree, trust vertex-mass.
-    front_sign = (lower_top == 0) ? lighter : (lighter == lower_top ? lighter : lighter);
+    // Trust the hood-is-lower signal (the front's top sits lower than the rear
+    // cabin/roof) — it is the physically robust cue for a passenger vehicle; fall
+    // back to vertex-mass only when the top signal is unavailable/degenerate.
+    // (The previous combine was a no-op that always used vertex-mass, which put a
+    // detailed-front Humvee in backwards.)
+    front_sign = (lower_top != 0) ? lower_top : lighter;
   }
   verts.clear();
   verts.reserve(pts.size() * 3);
