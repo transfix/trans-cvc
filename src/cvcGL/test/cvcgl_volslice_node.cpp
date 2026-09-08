@@ -91,6 +91,33 @@ cvc::volslice::render_settings redSettings(float amax) {
   return s;
 }
 
+// A density that ramps with Z: 0 at the -z face, 1 at the +z face. Paired with
+// redGreenBands() below it makes the volume RED on its -z half and GREEN on its
+// +z half -- a face whose colour tells you which end of the view axis you are
+// looking at, so a slice-order (back-to-front) regression is unmistakable.
+cvc::volume makeZGradedVolume(cvc::app &ctx, unsigned n) {
+  cvc::volume vol(ctx, cvc::dimension(n, n, n), cvc::Float, cvc::bounding_box(-1, -1, -1, 1, 1, 1));
+  for (unsigned k = 0; k < n; ++k) {
+    const double d = double(k) / (n - 1); // 0 at -z, 1 at +z
+    for (unsigned j = 0; j < n; ++j)
+      for (unsigned i = 0; i < n; ++i)
+        vol(i, j, k, d);
+  }
+  vol.min(0.0);
+  vol.max(1.0);
+  return vol;
+}
+
+// Opaque two-band TF: red on the low-density (-z) half, green on the high (+z).
+cvc::volslice::render_settings redGreenBands() {
+  cvc::volslice::render_settings s;
+  s.tf.add({0.00, 1.f, 0.f, 0.f, 1.f});
+  s.tf.add({0.49, 1.f, 0.f, 0.f, 1.f});
+  s.tf.add({0.51, 0.f, 1.f, 0.f, 1.f});
+  s.tf.add({1.00, 0.f, 1.f, 0.f, 1.f});
+  return s;
+}
+
 // Let the synchronous pipeline settle: state handlers, slice recompute, draw.
 void pump(SceneGraph &sg, SceneRenderer &view, VolSliceNode &node, int frames = 4) {
   for (int i = 0; i < frames; ++i) {
@@ -392,6 +419,31 @@ int main() {
 #else
     assert(depthOrderOk && "depthSortSliceProps must restore depth ordering");
 #endif
+  }
+
+  // ---- WITHIN-NODE slice order (the real-projection case the identity-clip
+  // slicer unit tests cannot reach). A single volume, RED on its -z half and
+  // GREEN on its +z half, viewed from +z looking down -z: the +z (green) face is
+  // NEAREST, so a correct back-to-front sweep composites green over red and the
+  // centre reads green. If VolSliceNode feeds the slicer a clip matrix whose
+  // depth sense is inverted (VTK's GL-NDC far=+z vs the slicer's far=-z sweep
+  // convention), the sweep runs front-to-back, the FAR (red) face paints last,
+  // and the centre reads red -- the volume shows the side facing AWAY from the
+  // camera. Isolated in its own scene so it cannot perturb the blocks above.
+  {
+    SceneGraph sg2(app, "volslice_zorder");
+    sg2.setDiagnosticChromeVisible(false);
+    auto zn = sg2.getGraphicsRoot()->addGraphicsChild<cvc::gl::VolSliceNode>("zvol");
+    sg2.registerGraphics("zvol", zn);
+    zn->setVolume(makeZGradedVolume(app, 32));
+    zn->setConfig(redGreenBands());
+    SceneRenderer view2(sg2, W, H, /*offscreen=*/true);
+    view2.setCamera(0, 0, 6, 0, 0, 0, 0, 1, 0, /*viewAngle=*/30.0, /*near=*/0.5, /*far=*/60.0);
+    pump(sg2, view2, *zn);
+    const RGB c = pixelAt(view2.frameRGB(), W / 2, H / 2);
+    std::printf("within-node z-order centre rgb = (%d,%d,%d) -- green must win\n", c.r, c.g, c.b);
+    assert(c.g > c.r && "within-node slices composited FAR-over-near: the +z (near) green face "
+                        "lost to the -z (far) red face -- VolSliceNode's clip-Z sense is inverted");
   }
 
   std::printf("cvcgl_volslice_node: all assertions passed\n");
