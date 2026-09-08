@@ -425,6 +425,21 @@ bool VolSliceNode::tick() {
   const double aspect = m_renderer->GetTiledAspectRatio();
   cvc::volslice::mat4 worldToClip =
       to_mat4(cam->GetCompositeProjectionTransformMatrix(aspect, -1, 1));
+  // Flip clip Z before handing the matrix to the slicer. compute_slices()
+  // extracts the near/view-plane normal and marches planes from the farthest
+  // inward -- back-to-front ONLY when clip depth increases toward the eye, the
+  // convention the slicer is written and unit-tested against (identity clip ==
+  // camera down -z with the far plane at the MOST NEGATIVE z). VTK hands back a
+  // GL-NDC projection where the far plane is at +z instead, so without this flip
+  // the extracted normal points into the scene, the sweep runs front-to-back,
+  // and the slice stack composites the volume's FAR face over its near face --
+  // the renderer then shows the side facing AWAY from the camera (bunny base for
+  // an overhead view, apparent rotation reversed). Negating the depth row
+  // (clip.z = -clip.z) restores the slicer's expected sense.
+  worldToClip.m[8] = -worldToClip.m[8];
+  worldToClip.m[9] = -worldToClip.m[9];
+  worldToClip.m[10] = -worldToClip.m[10];
+  worldToClip.m[11] = -worldToClip.m[11];
   cvc::volslice::mat4 localToWorld = to_mat4(getWorldTransform());
   const cvc::volslice::mat4 localToClip = worldToClip * localToWorld;
 
