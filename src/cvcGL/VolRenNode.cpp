@@ -8,6 +8,7 @@
 #include <cvc/gl/SceneGraph.h>
 #include <cvc/gl/VolRenNode.h>
 #include <limits>
+#include <vtkActor.h>
 #include <vtkCamera.h>
 #include <vtkMatrix4x4.h>
 #include <vtkOpenGLRenderWindow.h>
@@ -96,7 +97,13 @@ const char *kUnpremultiplyImpl =
     "  vec2 vrUVc = vec2(gl_FragCoord.x, volrenViewport.y - gl_FragCoord.y) / "
     "volrenViewport.xy;\n"
     "  vec4 vrCol = texture(volrenColorTex, vrUVc);\n"
-    "  gl_FragData[0] = (vrCol.a > 0.0) ? vec4(vrCol.rgb / vrCol.a, vrCol.a) : vec4(0.0);\n";
+    // Opaque quad (see the ForceOpaqueOn below): alpha-test the silhouette and
+    // emit full coverage. Emitting the raycast alpha here instead would let the
+    // opaque pass composite half-covered edge texels at fractional coverage over
+    // black -- a dark fringe the premultiplied blend never had (cvcgl_volren_node
+    // guards this). The color is the straight (un-premultiplied) volume colour.
+    "  if (vrCol.a < 0.5) discard;\n"
+    "  gl_FragData[0] = vec4(vrCol.rgb / vrCol.a, 1.0);\n";
 
 cvc::volren::mat4 to_mat4(vtkMatrix4x4 *m) {
   cvc::volren::mat4 out;
@@ -298,6 +305,17 @@ VolRenNode::VolRenNode(cvc::app &ctx, const std::string &statePath, const std::s
   setShaderUniformf("volrenNear", 0.1f);
   setShaderUniformf("volrenFar", 1000.f);
   setShaderUniformi("volrenPersp", 1);
+
+  // Write depth (occlude the scene) rather than sort as a translucent actor.
+  // The raycaster already composited the volume's own translucency into this
+  // image; the quad just needs to occupy the depth buffer at the volume's
+  // front-surface depth so scene geometry -- notably the translucent world-grid
+  // GL_LINES -- composites against the bunny by DEPTH, not draw order (the
+  // translucent pass masks depth writes, so a translucent quad silently drew
+  // over any line the sort placed behind it). gl_FragDepth is written; alpha-0
+  // background texels are discarded by the template's alpha test.
+  if (auto *actor = vtkActor::SafeDownCast(getProp()))
+    actor->ForceOpaqueOn();
 }
 
 VolRenNode::~VolRenNode() { m_worker.reset(); }
