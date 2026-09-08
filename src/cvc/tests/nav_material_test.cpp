@@ -383,6 +383,71 @@ TEST(NavMaterialRollout, FusedDriveStepNullMaterialMatchesPlainDriveStep) {
   EXPECT_EQ(std::memcmp(mc1.data(), mc2.data(), w.N * 4), 0);
 }
 
+// ── generic external force channel (ext_force) ──────────────────────────────
+// A constant force in the drive frame; `user` -> float x-component (y = 0). The
+// zero case writes +0.0f, matching the material force's additive-zero identity.
+static void ext_const_x(void *user, int, int, float, float, float *fx, float *fy) {
+  *fx = *static_cast<float *>(user);
+  *fy = 0.0f;
+}
+
+TEST(NavExtForce, NullExtIsByteIdentical) {
+  rollout_world w;
+  std::vector<float> o1 = w.o, th1 = w.th, sp1 = w.sp, mc1(w.N);
+  std::vector<float> o2 = w.o, th2 = w.th, sp2 = w.sp, mc2(w.N);
+  bicycle_rollout(w.fs, o1.data(), th1.data(), sp1.data(), w.goal.data(), w.al.data(), w.be.data(),
+                  w.ga.data(), w.N, nullptr, w.v, mc1.data(), 1);
+  ext_force ef; // sample == nullptr
+  bicycle_rollout_ext(w.fs, o2.data(), th2.data(), sp2.data(), w.goal.data(), w.al.data(),
+                      w.be.data(), w.ga.data(), w.N, nullptr, w.v, ef, mc2.data(), 1);
+  EXPECT_EQ(std::memcmp(o1.data(), o2.data(), o1.size() * 4), 0);
+  EXPECT_EQ(std::memcmp(th1.data(), th2.data(), w.N * 4), 0);
+  EXPECT_EQ(std::memcmp(sp1.data(), sp2.data(), w.N * 4), 0);
+  EXPECT_EQ(std::memcmp(mc1.data(), mc2.data(), w.N * 4), 0);
+}
+
+TEST(NavExtForce, FusedDriveStepNullExtMatchesPlainDriveStep) {
+  rollout_world w;
+  const coef_mlp model = coef_mlp::default_biased();
+  std::vector<float> o1 = w.o, th1 = w.th, sp1 = w.sp, mc1(w.N);
+  std::vector<float> o2 = w.o, th2 = w.th, sp2 = w.sp, mc2(w.N);
+  drive_step(w.fs, o1.data(), th1.data(), sp1.data(), w.goal.data(), model, w.N, nullptr, w.v,
+             mc1.data(), 1);
+  ext_force ef; // sample == nullptr
+  drive_step_ext(w.fs, o2.data(), th2.data(), sp2.data(), w.goal.data(), model, w.N, nullptr, w.v,
+                 ef, mc2.data(), 1);
+  EXPECT_EQ(std::memcmp(o1.data(), o2.data(), o1.size() * 4), 0);
+  EXPECT_EQ(std::memcmp(th1.data(), th2.data(), w.N * 4), 0);
+  EXPECT_EQ(std::memcmp(sp1.data(), sp2.data(), w.N * 4), 0);
+  EXPECT_EQ(std::memcmp(mc1.data(), mc2.data(), w.N * 4), 0);
+}
+
+TEST(NavExtForce, ExtForceChangesTheTrajectory) {
+  rollout_world w;
+  float mag = -2.0f; // push -x
+  ext_force ef;
+  ef.sample = &ext_const_x;
+  ef.user = &mag;
+  std::vector<float> o1 = w.o, th1 = w.th, sp1 = w.sp, mc1(w.N);
+  std::vector<float> o2 = w.o, th2 = w.th, sp2 = w.sp, mc2(w.N);
+  bicycle_rollout(w.fs, o1.data(), th1.data(), sp1.data(), w.goal.data(), w.al.data(), w.be.data(),
+                  w.ga.data(), w.N, nullptr, w.v, mc1.data(), 1);
+  bicycle_rollout_ext(w.fs, o2.data(), th2.data(), sp2.data(), w.goal.data(), w.al.data(),
+                      w.be.data(), w.ga.data(), w.N, nullptr, w.v, ef, mc2.data(), 1);
+  int diff = 0;
+  for (int i = 0; i < 2 * w.N; ++i)
+    if (o1[i] != o2[i])
+      ++diff;
+  EXPECT_GT(diff, 0) << "external force had no effect";
+  // a zero force (+0.0f) is additively inert -> byte-identical to the plain
+  // rollout, exactly like the material force's zero-lambda identity.
+  mag = 0.0f;
+  std::vector<float> o3 = w.o, th3 = w.th, sp3 = w.sp, mc3(w.N);
+  bicycle_rollout_ext(w.fs, o3.data(), th3.data(), sp3.data(), w.goal.data(), w.al.data(),
+                      w.be.data(), w.ga.data(), w.N, nullptr, w.v, ef, mc3.data(), 1);
+  EXPECT_EQ(std::memcmp(o1.data(), o3.data(), o1.size() * 4), 0);
+}
+
 TEST(NavMaterialRollout, MaterialForcesChangeTheTrajectory) {
   rollout_world w;
   // one material plane: constant risk gradient pushing -x, no hazard nearby
