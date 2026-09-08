@@ -242,8 +242,8 @@ namespace {
 // force joins the F-sum AND the steering bias — see material.h for why both.
 void rollout_impl(const field_stack &f, float *o, float *th, float *sp, const float *goal,
                   const float *al, const float *be, const float *ga, int n, const int *map_id,
-                  const veh_params &v, const material_drive *mat, float *minclr_out,
-                  int num_threads, thread_pool *pool = nullptr) {
+                  const veh_params &v, const material_drive *mat, const ext_force *ext,
+                  float *minclr_out, int num_threads, thread_pool *pool = nullptr) {
   const float hdt = v.dt / static_cast<float>(v.nsub);
   const float rr = v.rr, d_hat = v.d_hat, vmax = v.vmax, L = v.L;
   // t == 0 returns delta_max unchanged, so tan_dmax and every threshold built
@@ -352,6 +352,18 @@ void rollout_impl(const field_stack &f, float *o, float *th, float *sp, const fl
         Fy = Fy + Fmat_y;
       }
 
+      // Generic external force (e.g. cvc::dbg's RF/comms force). Sampled at the
+      // current pose AFTER geometry + material, and summed into the same F — the
+      // physics-agnostic port; see ext_force in drive.h. A null ext leaves Fx/Fy
+      // untouched, so the plain and _material paths stay byte-identical.
+      float Fext_x = 0.0f, Fext_y = 0.0f;
+      if (ext && ext->sample) {
+        const int eplane = map_id ? map_id[i] : 0;
+        ext->sample(ext->user, i, eplane, ox, oy, &Fext_x, &Fext_y);
+        Fx = Fx + Fext_x;
+        Fy = Fy + Fext_y;
+      }
+
       // head = (ch, sh); left = (-sh, ch)   [ch/sh hoisted above the sample]
       float a_long = (Fx * ch + Fy * sh) - gai * spi;
       a_long = std::min(std::max(a_long, -a_max_e), a_max_e);
@@ -373,10 +385,18 @@ void rollout_impl(const field_stack &f, float *o, float *th, float *sp, const fl
 
       // steering barrier bias: repulsive-only part of the IPC derivative,
       // computed with the sample above (summed per disc in the footprint path).
-      if (mat) {
-        // ((F_rep + F_mat) . left) — material steers, not only brakes.
-        const float sx = Frep_x + Fmat_x;
-        const float sy = Frep_y + Fmat_y;
+      // The external force also enters the steer bias (like material) when
+      // ext->steer; with ext null the sx/sy below are EXACTLY the pre-ext values
+      // (no `+ 0.0f` is introduced), so the plain and _material steer terms are
+      // byte-identical.
+      if (mat || (ext && ext->sample)) {
+        // ((F_rep + F_mat [+ F_ext]) . left) — these forces steer, not only brake.
+        float sx = Frep_x + Fmat_x; // Fmat_* == 0 when !mat
+        float sy = Frep_y + Fmat_y;
+        if (ext && ext->sample && ext->steer) {
+          sx += Fext_x;
+          sy += Fext_y;
+        }
         delta = delta + k_steer * std::tanh(sx * (-sh) + sy * ch);
       } else {
         delta = delta + k_steer * std::tanh(Frep_x * (-sh) + Frep_y * ch); // F_rep . left
@@ -457,16 +477,24 @@ void rollout_impl(const field_stack &f, float *o, float *th, float *sp, const fl
 void bicycle_rollout(const field_stack &f, float *o, float *th, float *sp, const float *goal,
                      const float *al, const float *be, const float *ga, int n, const int *map_id,
                      const veh_params &v, float *minclr_out, int num_threads, thread_pool *pool) {
-  rollout_impl(f, o, th, sp, goal, al, be, ga, n, map_id, v, nullptr, minclr_out, num_threads,
-               pool);
+  rollout_impl(f, o, th, sp, goal, al, be, ga, n, map_id, v, nullptr, nullptr, minclr_out,
+               num_threads, pool);
 }
 
 void bicycle_rollout_material(const field_stack &f, float *o, float *th, float *sp,
                               const float *goal, const float *al, const float *be, const float *ga,
                               int n, const int *map_id, const veh_params &v,
                               const material_drive &mat, float *minclr_out, int num_threads) {
-  rollout_impl(f, o, th, sp, goal, al, be, ga, n, map_id, v, mat.stack ? &mat : nullptr, minclr_out,
-               num_threads);
+  rollout_impl(f, o, th, sp, goal, al, be, ga, n, map_id, v, mat.stack ? &mat : nullptr, nullptr,
+               minclr_out, num_threads);
+}
+
+void bicycle_rollout_ext(const field_stack &f, float *o, float *th, float *sp, const float *goal,
+                         const float *al, const float *be, const float *ga, int n,
+                         const int *map_id, const veh_params &v, const ext_force &ext,
+                         float *minclr_out, int num_threads) {
+  rollout_impl(f, o, th, sp, goal, al, be, ga, n, map_id, v, nullptr, ext.sample ? &ext : nullptr,
+               minclr_out, num_threads);
 }
 
 void carrot_step(const float *o, const float *goal, const float *th, float *sp, const float *phi,
@@ -614,6 +642,34 @@ void drive_step_material(const field_stack &f, float *o, float *th, float *sp, c
   }
   bicycle_rollout_material(f, o, th, sp, carrot, al.data(), be.data(), ga.data(), n, map_id, v, mat,
                            minclr_out, num_threads);
+}
+
+void drive_step_ext(const field_stack &f, float *o, float *th, float *sp, const float *carrot,
+                    const coef_mlp &model, int n, const int *map_id, const veh_params &v,
+                    const ext_force &ext, float *minclr_out, int num_threads) {
+  // Same fused sample -> coef_feats -> forward -> rollout as drive_step, with the
+  // external force channel applied inside the rollout. A null ext.sample makes
+  // this byte-identical to drive_step.
+  const int in_w = model.in_features();
+  if (in_w != 5 && in_w != 6)
+    throw std::runtime_error("cvc::nav::drive_step_ext: coef_mlp input width must be 5 or 6");
+  const bool want_grip = in_w == 6;
+  if (want_grip && !(v.grip && v.grip->data))
+    throw std::runtime_error(
+        "cvc::nav::drive_step_ext: model takes 6 features but veh_params.grip is null");
+  std::vector<float> feat(static_cast<std::size_t>(n) * in_w);
+  coef_feats(f, o, carrot, n, map_id, feat.data(), num_threads, want_grip ? v.grip : nullptr,
+             v.mu_lookahead, v.mu_probes);
+  std::vector<float> coef(static_cast<std::size_t>(n) * 3);
+  model.forward(feat.data(), n, coef.data(), num_threads);
+  std::vector<float> al(n), be(n), ga(n);
+  for (int i = 0; i < n; ++i) {
+    al[i] = coef[3 * i + 0];
+    be[i] = coef[3 * i + 1];
+    ga[i] = coef[3 * i + 2];
+  }
+  bicycle_rollout_ext(f, o, th, sp, carrot, al.data(), be.data(), ga.data(), n, map_id, v, ext,
+                      minclr_out, num_threads);
 }
 
 } // namespace nav

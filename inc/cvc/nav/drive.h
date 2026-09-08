@@ -202,6 +202,48 @@ void drive_step(const field_stack &f, float *o, float *th, float *sp, const floa
                 const coef_mlp &model, int n, const int *map_id, const veh_params &v,
                 float *minclr_out, int num_threads = 0, thread_pool *pool = nullptr);
 
+// ─── Generic external force channel ──────────────────────────────────────────
+// A physics-AGNOSTIC hook that lets a caller add an extra per-agent force to the
+// drive, summed into the SAME force accumulator that already carries the wall
+// repulsion F_rep and (when present) the material force — and, when `steer`,
+// into the steering bias too, exactly like material_drive. cvc::nav knows only
+// "a force field evaluated at a pose"; it has NO vocabulary for what the force
+// MEANS. A private consumer (e.g. cvc::dbg's RF/comms force) builds an ext_force
+// whose `user` carries its state and whose `sample` computes its physics, then
+// calls drive_step_ext — so the open core never grows an RF/comm concept.
+//
+// `sample(user, i, plane, onx, ony, fx, fy)` writes the force for agent i at its
+// current NORMALIZED (centered) position (onx, ony) — cvc::nav's native drive
+// frame, the same coordinates material sampling receives; the consumer maps to
+// world via the field it holds (w = on/S + center). The written (fx, fy) is a
+// force in that same drive frame, added directly to the accumulator. `plane` is
+// map_id[i] (or 0). It is invoked per agent per substep across worker threads
+// (the drive parallel-for), so it MUST be reentrant.
+//
+// A null `sample` => NO external force: drive_step_ext / bicycle_rollout_ext
+// then delegate to the plain rollout and are byte-identical to it — the same
+// null-pointer default-off house pattern material_drive uses.
+struct ext_force {
+  void (*sample)(void *user, int i, int plane, float onx, float ony, float *fx,
+                 float *fy) = nullptr;
+  void *user = nullptr;
+  bool steer = true; // also enter the steering bias (like material), not only F.heading
+};
+
+// Kinematic-bicycle rollout with an external force channel — 1:1 with
+// bicycle_rollout, plus `ext`. A null ext.sample makes it byte-identical to
+// bicycle_rollout (asserted by NavExtForce.NullExtIsByteIdentical).
+void bicycle_rollout_ext(const field_stack &f, float *o, float *th, float *sp, const float *goal,
+                         const float *al, const float *be, const float *ga, int n,
+                         const int *map_id, const veh_params &v, const ext_force &ext,
+                         float *minclr_out, int num_threads = 0);
+
+// Fused per-tick drive with an external force channel — 1:1 with drive_step,
+// plus `ext`. A null ext.sample makes it byte-identical to drive_step.
+void drive_step_ext(const field_stack &f, float *o, float *th, float *sp, const float *carrot,
+                    const coef_mlp &model, int n, const int *map_id, const veh_params &v,
+                    const ext_force &ext, float *minclr_out, int num_threads = 0);
+
 // ─── Carrot state machine (swarm.py._plan_carrot) ────────────────────────────
 
 // The per-agent steering-carrot FSM state, as SoA columns (all length n; the
