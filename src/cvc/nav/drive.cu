@@ -130,7 +130,8 @@ __device__ inline float d_ipc(float dd, float d_hat) {
   const float dc = dd < 1e-6f ? 1e-6f : dd;
   if (!(dc < d_hat))
     return 0.0f;
-  return (d_hat - dc) * (2.0f * logf(dc / d_hat) - d_hat / dc) + 1.0f;
+  // M10: analytic b' (was +（d-dh)+1, an attraction band).
+  return -(2.0f * (dc - d_hat) * logf(dc / d_hat) + (dc - d_hat) * (dc - d_hat) / dc);
 }
 __device__ inline float d_silu(float x) { return x * (1.0f / (1.0f + expf(-x))); }
 __device__ inline float d_softplus(float x) { return x > 20.0f ? x : log1pf(expf(x)); }

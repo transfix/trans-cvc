@@ -30,7 +30,8 @@ namespace nav {
 namespace detail {
 
 // IPC barrier derivative dbdd (train_coef_energy.ipc_piecewise): safe=max(d,eps),
-// dbdd_in=(dh-d)(2 ln(safe/dh) - dh/safe)+1; d<=eps -> vp=-500; d>=dh -> 0; then
+// dbdd_in = -(2(d-dh) ln(safe/dh) + (d-dh)^2/safe) [M10: analytic b', was the
+// +（d-dh)+1 attraction-band form]; d<=eps -> vp=-500; d>=dh -> 0; then
 // clamp to [-max_grad, max_grad]=[-200,200]. So d<=eps yields -200 after clamp.
 CVC_MR_HD inline float ipc_dbdd_pw(float d, float dh) {
   const float eps = 1e-9f, vp = -500.0f, max_grad = 200.0f;
@@ -39,7 +40,8 @@ CVC_MR_HD inline float ipc_dbdd_pw(float d, float dh) {
     out = vp;
   } else if (d < dh) {
     const float safe = d < eps ? eps : d;
-    out = (dh - d) * (2.0f * std::log(safe / dh) - dh / safe) + 1.0f;
+    // M10: analytic b' (was +（d-dh)+1, an attraction band); verified vs autograd.
+    out = -(2.0f * (d - dh) * std::log(safe / dh) + (d - dh) * (d - dh) / safe);
   } else {
     out = 0.0f;
   }
@@ -90,20 +92,20 @@ CVC_MR_HD inline float patch_sample_channel(const float *ch, int Hp, int Wp, flo
 // autograd on min/max/where). Validated end-to-end by the finite-difference
 // gradcheck (nav_material_rollout_grad_test); do not "simplify".
 
-// d(ipc_dbdd_pw)/dd. Interior formula equals detail/diff_rollout.h ipc_grad_'s
+// d(ipc_dbdd_pw)/dd = b''. Interior formula equals detail/diff_rollout.h ipc_grad_'s
 // (the piecewise value there is this dbdd), guarded by the vp / >=dh dead
 // branches and the [-200,200] saturation (zero grad where clamped).
 CVC_MR_HD inline float ipc_dbdd_pw_grad(float d, float dh) {
   const float eps = 1e-9f, max_grad = 200.0f;
   if (d <= eps || !(d < dh))
     return 0.0f; // vp branch (then clamped) and the d>=dh zero branch
-  const float A = dh - d;
-  const float B = 2.0f * std::log(d / dh) - dh / d;
-  const float out = A * B + 1.0f;
+  // M10: forward is now b' = -(2 A ln(d/dh) + A^2/d), A = d-dh; grad is b''.
+  const float lg = std::log(d / dh);
+  const float A = d - dh;
+  const float out = -(2.0f * A * lg + A * A / d); // corrected dbdd (= b')
   if (out < -max_grad || out > max_grad)
-    return 0.0f; // saturated on the [-200,200] clamp
-  const float dB = 2.0f / d + dh / (d * d);
-  return -B + A * dB;
+    return 0.0f; // saturated on the [-200,200] clamp -> zero grad
+  return -2.0f * lg - 4.0f * A / d + A * A / (d * d); // b''
 }
 
 // d(sdf_barrier_db)/dphi. db = -sigmoid(z), z = k*(d_hat_sdf - phi); with

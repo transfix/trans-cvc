@@ -305,7 +305,7 @@ TEST(NavCoefTrainConvergence, TrainedPolicyDrivesInSimWorld) {
   cfg.horizon = 28;
   cfg.window = 7;
   cfg.steps = 150;
-  cfg.seed = 0; // default lr (2e-4) = the refinement regime
+  cfg.seed = 0; // default lr (5e-5, M10-retuned) = the refinement regime
   coef_trainer tr(cfg, 1);
   const double untrained = reach_rate(tr.to_coef_mlp(), sc, 256, 400, 5);
   tr.train(sc, /*verbose=*/false);
@@ -325,7 +325,7 @@ TEST(NavCoefTrainConvergence, TrainedPolicyDrivesInSimWorld) {
 // goal directly (the carrot FSM is a non-differentiable deployment wrapper), so
 // on the city scene it holds the hand-tuned basin rather than beating it, and its
 // governor landscape is far more sensitive than the surrogate's — it needs a much
-// lower lr (~1e-5 vs the surrogate's 2e-4; 2e-4 collapses it). The smooth
+// lower lr (~1e-5 vs the surrogate's M10-retuned 5e-5). The smooth
 // surrogate is the recommended default; the bicycle is here for matching the
 // deployment dynamics exactly when that is wanted.
 TEST(NavCoefTrainConvergence, BicycleTrainedPolicyDrives) {
