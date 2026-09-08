@@ -20,6 +20,7 @@
 #include <vtkImageData.h>
 #include <vtkLine.h>
 #include <vtkOpenGLPolyDataMapper.h>
+#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLVertexBufferObject.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
@@ -33,6 +34,7 @@
 #include <vtkShaderProperty.h>
 #include <vtkTexture.h>
 #include <vtkTextureObject.h>
+#include <vtkTextureUnitManager.h>
 #include <vtkTransform.h>
 #include <vtkUniforms.h>
 #include <vtkUnsignedCharArray.h>
@@ -742,12 +744,43 @@ void GeometryNode::onUpdateShader(vtkObject *, unsigned long, void *clientData, 
   for (auto &kv : self->m_uniforms3F)
     if (program->IsUniformUsed(kv.first.c_str()))
       program->SetUniform3f(kv.first.c_str(), kv.second.data());
+  // Bind our custom textures onto units the mapper won't reuse. The wasm
+  // low-memory poly-data mapper has no real VBOs: it emulates every vertex buffer
+  // (positions, normals, cell/edge id maps) as sampler2D/isampler2D/usampler2D
+  // texture units, and it activates those onto the LOWEST free units later, during
+  // the draw — after this UpdateShaderEvent fires. If we let Activate() hand our
+  // own textures those same low units now, one of the mapper's sampler2D buffers
+  // ends up sharing a unit with e.g. a sampler3D volume: GL rejects the draw with
+  // "two textures of different types use the same sampler location" and the result
+  // is undefined. (The native mapper uses real VBOs, needs no vertex-data texture
+  // units, and never hits this.) So reserve a block of low units first — pushing
+  // our Activate() above the mapper's emulated buffers — then release the
+  // reservation so the mapper still gets its low units back for the draw.
+  vtkTextureUnitManager *tum = nullptr;
+  for (auto &kv : self->m_shaderTextures)
+    if (kv.second && kv.second->GetContext()) {
+      tum = kv.second->GetContext()->GetTextureUnitManager();
+      break;
+    }
+  constexpr int kMapperReserve = 8; // comfortably above the mapper's emulated buffers
+  int reserved[kMapperReserve];
+  int nReserved = 0;
+  if (tum)
+    for (int i = 0; i < kMapperReserve; ++i) {
+      int u = tum->Allocate();
+      if (u < 0)
+        break;
+      reserved[nReserved++] = u;
+    }
   for (auto &kv : self->m_shaderTextures) {
     if (kv.second && program->IsUniformUsed(kv.first.c_str())) {
       kv.second->Activate();
       program->SetUniformi(kv.first.c_str(), kv.second->GetTextureUnit());
     }
   }
+  if (tum)
+    for (int i = 0; i < nReserved; ++i)
+      tum->Free(reserved[i]);
 }
 
 void GeometryNode::ensureShaderTexObserver() {
