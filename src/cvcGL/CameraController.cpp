@@ -551,6 +551,11 @@ void CameraController::setMode(Mode m) {
   setPointerCapture(m == Mode::Fly);
   syncConfigToState();
   syncPoseToState();
+  // Only Map wants a parallel (orthographic) projection; leaving Map for any other
+  // mode must restore perspective (symmetric with frameMap()'s ParallelProjectionOn),
+  // or 3-D orbit/fly renders sheared. A harmless no-op for already-perspective modes.
+  if (s.camera && m != Mode::Map)
+    s.camera->ParallelProjectionOff();
   applyToCamera();
 }
 
@@ -731,7 +736,11 @@ void CameraController::update(double dtSeconds) {
       }
     }
   }
-  applyToCamera();
+  // In Map mode the vtkCamera is driven directly (frameMap() for the top-down
+  // look, and the Map branches of mouseLook/mouseWheel for pan/zoom); reasserting
+  // the orbit pose here every frame would clobber the map pose and undo any pan.
+  if (s.mode != Mode::Map)
+    applyToCamera();
   // Mirror the live pose to state on a throttle (per-frame writes are a known
   // state-tree perf sink; poseMirrorHz<=0 disables).
   if (s.poseMirrorHz > 0.0) {
