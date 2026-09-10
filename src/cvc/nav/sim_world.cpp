@@ -474,6 +474,12 @@ void sim_world::step(int num_threads) {
     md.d_hat_m = mat_cfg_.d_hat_m;
     drive_step_material(fs, o_.data(), th_.data(), sp_.data(), carrot_.data(), model_, n_,
                         map_id_.data(), cfg_.veh, md, minclr.data(), num_threads);
+  } else if (ext_.sample) {
+    // External force channel (e.g. cvc::dbg's RF/comms force) summed into the
+    // drive via the sanctioned ext_force port. Byte-identical to drive_step when
+    // ext_.sample is null (so this branch is only taken when a force is set).
+    drive_step_ext(fs, o_.data(), th_.data(), sp_.data(), carrot_.data(), model_, n_,
+                   map_id_.data(), cfg_.veh, ext_, minclr.data(), num_threads);
   } else {
     drive_step(fs, o_.data(), th_.data(), sp_.data(), carrot_.data(), model_, n_, map_id_.data(),
                cfg_.veh, minclr.data(), num_threads, pool_);

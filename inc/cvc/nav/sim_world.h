@@ -129,6 +129,17 @@ public:
   // hands it in. Set it once before stepping.
   void set_thread_pool(cvc::thread_pool *pool) { pool_ = pool; }
 
+  // Inject a generic external per-agent force into the drive. When set
+  // (ext.sample != nullptr) step() routes the (non-material) drive through
+  // drive_step_ext, summing this force into the SAME accumulator as F_rep/F_goal
+  // (and the steering bias when ext.steer) — the sanctioned ext_force port
+  // (drive.h). The core stays physics-agnostic: a private consumer (e.g.
+  // cvc::dbg's RF/comms force) supplies the callback + its state via ext.user,
+  // which must outlive stepping. A null sample (the default) is byte-identical to
+  // the plain drive. No effect on the material path (drive_step_material).
+  void set_ext_force(const ext_force &ext) { ext_ = ext; }
+  void clear_ext_force() { ext_ = ext_force{}; }
+
   int size() const { return n_; }
   int planes() const { return M_; } // belief-plane count (M): 1 shared, N private
   int rows() const { return rows_; }
@@ -215,6 +226,7 @@ private:
   long gstep_ = 0;
   int field_ver_ = 0;
   cvc::thread_pool *pool_ = nullptr; // borrowed executor for step() (may be null)
+  ext_force ext_{};                  // optional external force channel (null sample = off)
 
   coef_mlp model_;
   std::vector<std::uint8_t> truth_;
