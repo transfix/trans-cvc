@@ -65,27 +65,13 @@ boost::mutex &startup_registry_mutex() {
   return m;
 }
 
-// Per-app mutex keyed by &app, used as a brief check-then-create
-// critical section around the lazy root creation in instancePtr().
-// Replaces the previous process-wide _instanceMutex so two
-// independent apps no longer contend on each other's first-root
-// creation.
-boost::mutex &instance_registry_mutex() {
-  static boost::mutex m;
-  return m;
-}
-
-boost::mutex &mutex_for_app(app &ctx) {
-  static std::map<const app *, std::shared_ptr<boost::mutex>> per_app;
-  std::shared_ptr<boost::mutex> m;
-  {
-    boost::mutex::scoped_lock lock(instance_registry_mutex());
-    auto &slot = per_app[&ctx];
-    if (!slot)
-      slot = std::make_shared<boost::mutex>();
-    m = slot;
-  }
-  return *m;
+// Monotonic id source for startup_connection. Starts at 1 so that 0 can
+// mean "never connected" in a default-constructed handle. Ids are never
+// reused, so a stale handle can never name a later registration.
+// Caller must hold startup_registry_mutex().
+std::size_t next_startup_id() {
+  static std::size_t counter = 0;
+  return ++counter;
 }
 
 } // namespace
@@ -141,14 +127,24 @@ state::~state() { destroyed(); }
 //                         mutex_for_app(), and the once-per-process
 //                         _startupFired flag is replaced by once-per-app
 //                         firing keyed off the app data map.
+// 09/08/2026 -- Joe R. -- Guard is now the app's own named mutex rather
+//                         than a file-static map keyed by &app. That map
+//                         was never pruned, so it grew for the life of the
+//                         process and, because addresses get recycled, a
+//                         freshly constructed app could silently inherit a
+//                         dead app's mutex.
 state::state_ptr state::instancePtr(app &ctx) {
   bool fire_startup = false;
   state_ptr ptr;
   {
-    // Per-app critical section around check-then-create on the
-    // app's data map. Two distinct apps do not contend here.
-    boost::mutex::scoped_lock lock(mutex_for_app(ctx));
     const std::string statekey("__state");
+    // Per-app critical section around check-then-create on the app's data
+    // map. The guard is the app's OWN mutex, so it is created and destroyed
+    // with the app and two distinct apps never contend here. Hold the
+    // mutex_ptr for as long as the lock: app::mutex() hands back a
+    // shared_ptr, and the app owns the only other reference.
+    mutex_ptr root_guard = ctx.mutex(statekey);
+    boost::mutex::scoped_lock lock(*root_guard);
     try {
       ptr = ctx.data<state_ptr>(statekey);
     } catch (std::exception &) {
@@ -172,11 +168,11 @@ state::state_ptr state::instancePtr(app &ctx) {
       nullary_snapshot = _startup;
       app_snapshot = _appStartup;
     }
-    BOOST_FOREACH (nullary_func &init_func, nullary_snapshot) {
-      init_func();
+    BOOST_FOREACH (init_func_vec::value_type &entry, nullary_snapshot) {
+      entry.second();
     }
-    BOOST_FOREACH (app_init_func &init_func, app_snapshot) {
-      init_func(ctx);
+    BOOST_FOREACH (app_init_func_vec::value_type &entry, app_snapshot) {
+      entry.second(ctx);
     }
   }
 
@@ -499,7 +495,21 @@ void state::reset(bool resetChildren, bool fireCallbacks) {
       BOOST_FOREACH (child_map::value_type val, _children)
         val.second->reset(resetChildren, fireCallbacks);
     } else {
-      // Detach children without resetting them - they persist via shared_ptr
+      // NOT "reset everything but the children" -- this DESTROYS them.
+      //
+      // Nothing else owns a child: operator() hands out state&, never the
+      // owning state_ptr, so dropping the map runs ~state over the whole
+      // subtree and invalidates every reference a caller still holds:
+      //
+      //   state &s = root("a.b");
+      //   root("a").reset(false);   // s dangles from here on
+      //
+      // A later operator()("a.b") therefore does not return the old node;
+      // it silently creates a fresh, uninitialized one. That is exactly
+      // what the reset(false) tests observe when they check initialized().
+      // Only tests call this today. A caller that genuinely wants
+      // detach-and-keep must be handed the state_ptrs rather than having
+      // them dropped here.
       _children.clear();
     }
   }
@@ -1311,14 +1321,72 @@ std::size_t state::sweepExpired() {
 //   Add to the list of functions to call when first initializing cvcstate.
 // ---- Change History ----
 // 01/12/2014 -- Joe R. -- Creation.
-void state::on_startup(const nullary_func &init_func) {
+// Returns a handle the caller can use to remove the registration again.
+// Callers registering a process-lifetime callback (the usual case: a
+// file-scope static registrar) may ignore it; anything whose captures do
+// not outlive the process must keep the handle and disconnect().
+state::startup_connection state::on_startup(const nullary_func &init_func) {
   boost::mutex::scoped_lock lock(startup_registry_mutex());
-  _startup.push_back(init_func);
+  const std::size_t id = next_startup_id();
+  _startup.push_back(std::make_pair(id, init_func));
+  return startup_connection(startup_connection::registry_kind::nullary, id);
 }
 
-void state::on_startup(const app_init_func &init_func) {
+state::startup_connection state::on_startup(const app_init_func &init_func) {
   boost::mutex::scoped_lock lock(startup_registry_mutex());
-  _appStartup.push_back(init_func);
+  const std::size_t id = next_startup_id();
+  _appStartup.push_back(std::make_pair(id, init_func));
+  return startup_connection(startup_connection::registry_kind::per_app, id);
+}
+
+// ------------------------------
+// state::startup_connection
+// ------------------------------
+// Purpose:
+//   Removal side of on_startup(). Both operations take the same registry
+//   guard as on_startup() and instancePtr()'s snapshot, so disconnecting
+//   concurrently with an app's first root creation is safe: the callback
+//   either made it into that snapshot and runs once more, or it did not.
+//   It can never be invoked after disconnect() has returned on the thread
+//   that owns the captured storage, which is what callers need.
+namespace {
+
+// Erase the entry with the given id from a registry. Returns whether an
+// entry was actually removed. Caller must hold startup_registry_mutex().
+template <class Vec> bool erase_startup_entry(Vec &registry, std::size_t id) {
+  for (typename Vec::iterator it = registry.begin(); it != registry.end(); ++it) {
+    if (it->first == id) {
+      registry.erase(it);
+      return true;
+    }
+  }
+  return false;
+}
+
+} // namespace
+
+bool state::startup_connection::connected() const {
+  if (_id == 0)
+    return false;
+  boost::mutex::scoped_lock lock(startup_registry_mutex());
+  if (_kind == registry_kind::nullary) {
+    BOOST_FOREACH (init_func_vec::value_type &entry, _startup)
+      if (entry.first == _id)
+        return true;
+  } else {
+    BOOST_FOREACH (app_init_func_vec::value_type &entry, _appStartup)
+      if (entry.first == _id)
+        return true;
+  }
+  return false;
+}
+
+bool state::startup_connection::disconnect() {
+  if (_id == 0)
+    return false;
+  boost::mutex::scoped_lock lock(startup_registry_mutex());
+  return _kind == registry_kind::nullary ? erase_startup_entry(_startup, _id)
+                                         : erase_startup_entry(_appStartup, _id);
 }
 
 // -------------------
