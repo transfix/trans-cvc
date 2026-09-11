@@ -713,21 +713,32 @@ state &state::operator()(const std::string &childname) {
 
   string nearest = keys.front();
   keys.erase(keys.begin());
+  // Resolve (or create) the immediate child under our own lock, then
+  // RELEASE that lock before recursing into it.
+  //
+  // The recursive call used to be made with _mutex still held, so walking
+  // "a.b.c" from the root kept the root's lock for the entire descent.
+  // Every path lookup in the app therefore serialized on the root mutex,
+  // and a 100-deep path held 100 locks at once. Only the create-or-get on
+  // this node's map has to be atomic, and it still is.
+  //
+  // Holding the child as a state_ptr across the recursion also keeps it
+  // alive for the duration, so a concurrent reset(false) dropping it from
+  // this node's map can no longer pull it out from under the descent.
+  state_ptr child;
   {
     boost::mutex::scoped_lock lock(_mutex);
-    // If we have the child state in our map, take out its part of the
-    // keys vector and recursively call its operator().
-    // If not, create a new one.
-    if (_children.find(nearest) != _children.end() && _children[nearest])
-      return (*_children[nearest])(join(keys, SEPARATOR));
-    else {
-      state_ptr s(new state(_ctx, nearest, this));
-      _children[nearest] = s;
+    auto it = _children.find(nearest);
+    if (it != _children.end() && it->second) {
+      child = it->second;
+    } else {
+      child.reset(new state(_ctx, nearest, this));
+      _children[nearest] = child;
       _lastMod = boost::posix_time::microsec_clock::universal_time();
       _initialized = true;
-      return (*_children[nearest])(join(keys, SEPARATOR));
     }
   }
+  return (*child)(join(keys, SEPARATOR));
 }
 
 // ----------------
