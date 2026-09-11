@@ -33,10 +33,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <cstddef>
 #include <cvc/core/app.h>
 #include <cvc/core/exception.h>
 #include <cvc/core/namespace.h>
 #include <cvc/core/types.h>
+#include <utility>
 #include <vector>
 
 namespace cvc {
@@ -152,8 +154,42 @@ public:
   typedef boost::function<void(std::string)> traversal_unary_func;
   typedef boost::function<void()> nullary_func;
   typedef boost::function<void(app &)> app_init_func;
-  typedef std::vector<nullary_func> init_func_vec;
-  typedef std::vector<app_init_func> app_init_func_vec;
+
+  // Registry entries are (id, callback). The id is what a
+  // startup_connection names, so a registration stays addressable
+  // even as other entries are added or removed around it.
+  typedef std::vector<std::pair<std::size_t, nullary_func>> init_func_vec;
+  typedef std::vector<std::pair<std::size_t, app_init_func>> app_init_func_vec;
+
+  // Handle to a single on_startup() registration.
+  //
+  // The startup registries are process-global, and since roots became
+  // per-app every registered callback fires AGAIN for every app created
+  // later in the process. So a callback that captures anything whose
+  // lifetime is shorter than the process MUST be disconnected before that
+  // lifetime ends -- otherwise the next app creation calls into freed
+  // storage. Without a handle that was not expressible, and a test that
+  // captured a stack local by reference corrupted the rest of the run.
+  class startup_connection {
+  public:
+    startup_connection() = default;
+
+    // True while this handle still names a live registration. False for a
+    // default-constructed handle and for one already disconnected.
+    bool connected() const;
+
+    // Remove the registration. Returns true if this call removed it, false
+    // if it was already gone. Idempotent, and safe to call from any thread.
+    bool disconnect();
+
+  private:
+    friend class state;
+    enum class registry_kind { nullary, per_app };
+    startup_connection(registry_kind k, std::size_t id) : _kind(k), _id(id) {}
+
+    registry_kind _kind = registry_kind::nullary;
+    std::size_t _id = 0; // 0 == never connected
+  };
 
   // MUST be a compile-time constant, NOT an inline std::string.
   //
@@ -372,6 +408,17 @@ public:
     return ret_data;
   }
 
+  // Clear this node's value, data, comment and hidden flag.
+  //
+  // resetChildren = true (the default) recurses, resetting the subtree in
+  // place and keeping every node.
+  //
+  // resetChildren = false DESTROYS the children instead of recursing.
+  // Beware: operator() returns state&, never the owning state_ptr, so the
+  // parent's child map holds the only reference and dropping it deletes the
+  // whole subtree. Any state& a caller still holds into that subtree
+  // dangles, and a later operator() on the same path returns a fresh,
+  // uninitialized node rather than the original.
   void reset(bool resetChildren = true, bool fireCallbacks = true);
 
   // converting to and from a boost property tree.  Useful for saving and restoring state.
@@ -639,12 +686,12 @@ public:
   // registered callbacks exactly once. The previous global
   // "first app wins" behavior was a singleton assumption and has
   // been removed.
-  static void on_startup(const nullary_func &init_func);
+  static startup_connection on_startup(const nullary_func &init_func);
 
   // Register a callback fired once for every distinct app whose
   // root state is lazily created. Prefer this form for per-app
   // bootstrap logic so that secondary apps get the same defaults.
-  static void on_startup(const app_init_func &init_func);
+  static startup_connection on_startup(const app_init_func &init_func);
 
 protected:
   state(app &ctx, const std::string &n = std::string(), const state *p = NULL);

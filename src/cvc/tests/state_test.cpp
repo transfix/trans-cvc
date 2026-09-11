@@ -81,6 +81,37 @@ TEST_F(StateTestFixture, AppRootShorthand) {
   ctx.root()("test.app_root_shorthand").reset();
 }
 
+TEST_F(StateTestFixture, ConcurrentFirstRootCreationYieldsOneRoot) {
+  // instancePtr() does check-then-create on the app's data map under the
+  // app's own named mutex. If that guard is wrong, racing threads each
+  // build a root and all but one is dropped, so the survivors disagree.
+  cvc::app fresh;
+  const int num_threads = 8;
+  std::vector<cvc::state *> roots(num_threads, nullptr);
+  std::vector<boost::thread> threads;
+
+  for (int i = 0; i < num_threads; ++i)
+    threads.emplace_back([i, &fresh, &roots]() { roots[i] = &cvc::state::instance(fresh); });
+  for (auto &t : threads)
+    t.join();
+
+  ASSERT_NE(roots[0], nullptr);
+  for (int i = 1; i < num_threads; ++i)
+    EXPECT_EQ(roots[0], roots[i]);
+}
+
+TEST_F(StateTestFixture, RecycledAppAddressesDoNotShareState) {
+  // Successive stack-allocated apps commonly land on the same address. The
+  // root-creation guard is keyed off the app itself, not its address, so
+  // each must still get a completely fresh root.
+  for (int i = 0; i < 25; ++i) {
+    cvc::app a;
+    EXPECT_FALSE(cvc::state::instance(a)("probe").initialized());
+    cvc::state::instance(a)("probe").value(i);
+    EXPECT_EQ(cvc::state::instance(a)("probe").value<int>(), i);
+  }
+}
+
 // ===========================
 // Value Management Tests
 // ===========================
@@ -1318,16 +1349,57 @@ TEST_F(StateTestFixture, OnStartupRegistration) {
   // segfaulted every time, and it poisoned every subsequent test in the same
   // process -- which is why the damage always surfaced somewhere unrelated.
   //
-  // Own the flag and capture the owner BY VALUE, so the callback stays valid
-  // for exactly as long as the registry holds it.
-  boost::shared_ptr<bool> startup_called = boost::make_shared<bool>(false);
+  // Capturing an owning shared_ptr by value fixes the crash but leaves the
+  // callback in the registry for the rest of the process. on_startup() now
+  // returns a handle, so the registration can simply be taken back out --
+  // which is what makes capturing a plain local by reference safe again.
+  bool startup_called = false;
 
-  state::on_startup(state::nullary_func([startup_called]() { *startup_called = true; }));
+  state::startup_connection conn =
+      state::on_startup(state::nullary_func([&startup_called]() { startup_called = true; }));
+  EXPECT_TRUE(conn.connected());
 
-  // This fixture's app already created its root state, so the callbacks have
-  // fired for it; there is nothing to observe here beyond registration itself
-  // completing without throwing.
-  SUCCEED();
+  // Roots are per-app, so creating an app is what fires the registry. This
+  // fixture's own ctx may or may not have a root yet, so use a fresh app to
+  // observe the firing directly rather than assuming.
+  {
+    cvc::app probe;
+    cvc::state::instance(probe);
+  }
+  EXPECT_TRUE(startup_called);
+
+  // Must actually come back out of the registry, and idempotently so.
+  EXPECT_TRUE(conn.disconnect());
+  EXPECT_FALSE(conn.connected());
+  EXPECT_FALSE(conn.disconnect());
+}
+
+TEST_F(StateTestFixture, OnStartupDisconnectStopsFurtherFiring) {
+  int call_count = 0;
+  state::startup_connection conn =
+      state::on_startup(state::nullary_func([&call_count]() { ++call_count; }));
+
+  {
+    cvc::app first;
+    cvc::state::instance(first);
+  }
+  EXPECT_EQ(call_count, 1);
+
+  EXPECT_TRUE(conn.disconnect());
+
+  // After disconnect the callback must not fire for subsequently created
+  // apps -- the property that makes the by-reference capture above safe.
+  {
+    cvc::app second;
+    cvc::state::instance(second);
+  }
+  EXPECT_EQ(call_count, 1);
+}
+
+TEST_F(StateTestFixture, OnStartupDefaultConnectionIsInert) {
+  state::startup_connection conn;
+  EXPECT_FALSE(conn.connected());
+  EXPECT_FALSE(conn.disconnect());
 }
 
 // ===========================
