@@ -1305,31 +1305,43 @@ TEST_F(AppTest, ThreadInfoAndProgressTracking) {
   std::atomic<bool> thread_started(false);
   std::atomic<bool> continue_running(true);
 
-  // Start a thread that updates its info and progress
+  // Checkpoint handshake between the worker and this thread.
+  //
+  // The worker used to publish a checkpoint and then sleep 50ms, while the
+  // reader polled until progress crossed a threshold and only then asserted the
+  // exact value. That is a race: if the reader was descheduled for longer than
+  // the worker's sleep -- routine on a loaded CI runner -- the worker had
+  // already moved on, and the reader read 0.50 where it asserted 0.25. It
+  // failed intermittently on macos-latest/Debug while telling us nothing about
+  // the code under test.
+  //
+  // Instead the worker parks on each checkpoint until the reader reports having
+  // consumed it, so every read happens with the worker held at exactly the
+  // checkpoint being asserted. No sleeps, no timing assumptions.
+  std::atomic<int> published(0); // checkpoints the worker has made visible
+  std::atomic<int> observed(0);  // checkpoints the reader has consumed
+
+  // static so the worker's captures stay valid even if the join below is
+  // skipped and the thread outlives this frame.
+  static const double checkpoints[] = {0.0, 0.25, 0.50, 0.75};
+  static const char *const infos[] = {"Starting processing", "Processing step 1",
+                                      "Processing step 2", "Processing step 3"};
+  static const int num_checkpoints = 4;
+
   ctx.startThreadPooled(
       thread_key,
       [&]() {
         thread_started = true;
 
-        // Set initial thread info
-        ctx.threadInfo(thread_key, "Starting processing");
-        ctx.threadProgress(thread_key, 0.0);
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+        for (int s = 0; s < num_checkpoints; ++s) {
+          ctx.threadInfo(thread_key, infos[s]);
+          ctx.threadProgress(thread_key, checkpoints[s]);
+          published.store(s + 1);
 
-        // Update to 25% progress
-        ctx.threadInfo(thread_key, "Processing step 1");
-        ctx.threadProgress(thread_key, 0.25);
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
-
-        // Update to 50% progress
-        ctx.threadInfo(thread_key, "Processing step 2");
-        ctx.threadProgress(thread_key, 0.50);
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
-
-        // Update to 75% progress
-        ctx.threadInfo(thread_key, "Processing step 3");
-        ctx.threadProgress(thread_key, 0.75);
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+          // Hold here until the reader has consumed this checkpoint.
+          while (observed.load() < s + 1)
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+        }
 
         // Wait until we're told to finish
         while (continue_running.load()) {
@@ -1347,30 +1359,29 @@ TEST_F(AppTest, ThreadInfoAndProgressTracking) {
       PRIORITY_NORMAL, true);
 
   // Wait for thread to start
-  for (int i = 0; i < 50 && !thread_started.load(); i++) {
+  for (int i = 0; i < 500 && !thread_started.load(); i++) {
     boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
   }
   ASSERT_TRUE(thread_started.load()) << "Thread should have started";
 
-  // Verify we can read info and progress while thread is running
-  // Use polling to wait for each checkpoint instead of fixed sleeps
+  // Wait for checkpoint n, read progress while the worker is parked on it, then
+  // release the worker. Always releases, even when the wait times out, so a
+  // failure reports cleanly instead of wedging the worker.
+  auto consume = [&](int n) {
+    for (int i = 0; i < 500 && published.load() < n; i++)
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+    EXPECT_GE(published.load(), n) << "worker never reached checkpoint " << n;
+    double p = ctx.threadProgress(thread_key);
+    observed.store(n);
+    return p;
+  };
 
-  // Wait for 25% progress
-  for (int i = 0; i < 200 && ctx.threadProgress(thread_key) < 0.24; i++)
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-  double progress1 = ctx.threadProgress(thread_key);
+  consume(1); // 0.0 -- the starting checkpoint, nothing to assert
+  double progress1 = consume(2);
   EXPECT_NEAR(progress1, 0.25, 0.01);
-
-  // Wait for 50% progress
-  for (int i = 0; i < 200 && ctx.threadProgress(thread_key) < 0.49; i++)
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-  double progress2 = ctx.threadProgress(thread_key);
+  double progress2 = consume(3);
   EXPECT_NEAR(progress2, 0.50, 0.01);
-
-  // Wait for 75% progress
-  for (int i = 0; i < 200 && ctx.threadProgress(thread_key) < 0.74; i++)
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-  double progress3 = ctx.threadProgress(thread_key);
+  double progress3 = consume(4);
   EXPECT_NEAR(progress3, 0.75, 0.01);
 
   // Verify progress is increasing
