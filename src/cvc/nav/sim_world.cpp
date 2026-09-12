@@ -32,10 +32,12 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cvc/core/thread_pool.h>
 #include <cvc/nav/belief_occupancy.h>
 #include <cvc/nav/grid_nav.h>
 #include <cvc/nav/sim_world.h>
 #include <limits>
+#include <new>
 #include <random>
 #include <stdexcept>
 #include <vector>
@@ -327,19 +329,55 @@ void sim_world::step(int num_threads) {
     const double t_now = gstep_ * static_cast<double>(cfg_.veh.dt);
     const unknown_policy pol =
         cfg_.optimistic ? unknown_policy::optimistic : unknown_policy::pessimistic;
-    std::vector<std::uint8_t> occ2(hw);
+    // Composite each plane's log-odds into an occupancy grid and, when its planning
+    // surface actually changed, rebuild that plane's SDF/normals. Each plane m is
+    // INDEPENDENT — it reads only its own log-odds/dyn-stamp/occ slice and writes only
+    // its own occ_ and field_ slice — so the loop parallelizes cleanly across planes.
+    // rebuild_plane() (two EDT passes over rows_*cols_) is the whole cost of step() once
+    // vehicles are sensing (each with a private plane, M == N), and it is memory-bound,
+    // so a borrowed pool over the planes is the single biggest win here. Each task owns
+    // its own occ2 scratch; `changed[]`/`failed[]` are per-plane (disjoint writes) and
+    // reduced after the fan-out.
+    //
+    // Exception safety: the task is noexcept — it catches any throw (realistically only
+    // std::bad_alloc from occ2 / build_sdf under memory pressure) into failed[m] instead
+    // of letting it escape. That matters because a throw out of a POOL WORKER would hit
+    // its thread entry and std::terminate, and a throw out of the caller would unwind the
+    // stack-allocated pool `job` while workers still reference it. parallel_for fully
+    // drains before returning, so once it (or the serial loop) is done, no task is in
+    // flight; we then surface an out-of-memory failure by throwing from the caller, which
+    // unwinds cleanly exactly as the old serial loop did.
+    std::vector<std::uint8_t> changed(static_cast<std::size_t>(M_), 0);
+    std::vector<std::uint8_t> failed(static_cast<std::size_t>(M_), 0);
+    auto composite_and_rebuild = [&](int m) noexcept {
+      try {
+        const long off = static_cast<long>(m) * hw;
+        std::vector<std::uint8_t> occ2(hw);
+        composite_occupancy(logodds_.data() + off, rows_, cols_, pol, cfg_.p_thresh, cfg_.band,
+                            dyn_stamp_.data() + off, t_now, cfg_.ttl_s, occ2.data());
+        if (version_[m] != last_version_[m] ||
+            !std::equal(occ2.begin(), occ2.end(), occ_.begin() + off)) {
+          std::copy(occ2.begin(), occ2.end(), occ_.begin() + off);
+          rebuild_plane(m);
+          last_version_[m] = version_[m];
+          changed[m] = 1;
+        }
+      } catch (...) {
+        failed[m] = 1;
+      }
+    };
+    if (pool_ && M_ > 1)
+      pool_->parallel_for(M_, composite_and_rebuild);
+    else
+      for (int m = 0; m < M_; ++m)
+        composite_and_rebuild(m);
     bool any = false;
     for (int m = 0; m < M_; ++m) {
-      const long off = static_cast<long>(m) * hw;
-      composite_occupancy(logodds_.data() + off, rows_, cols_, pol, cfg_.p_thresh, cfg_.band,
-                          dyn_stamp_.data() + off, t_now, cfg_.ttl_s, occ2.data());
-      if (version_[m] != last_version_[m] ||
-          !std::equal(occ2.begin(), occ2.end(), occ_.begin() + off)) {
-        std::copy(occ2.begin(), occ2.end(), occ_.begin() + off);
-        rebuild_plane(m);
-        last_version_[m] = version_[m];
+      if (failed[m])
+        throw std::bad_alloc(); // a plane's rebuild ran out of memory; propagate like the serial
+                                // path
+      if (changed[m])
         any = true;
-      }
     }
     if (any)
       ++field_ver_;
