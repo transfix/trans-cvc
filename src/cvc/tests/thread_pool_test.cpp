@@ -11,6 +11,7 @@
 #include <cvc/core/thread_pool.h>
 #include <gtest/gtest.h>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <unordered_set>
 #include <vector>
@@ -160,4 +161,100 @@ TEST(ThreadPool, EmptyRangeIsANoop) {
   pool.parallel_for(0, [&](int) { ++calls; });
   pool.parallel_for(-5, [&](int) { ++calls; });
   EXPECT_EQ(calls, 0);
+}
+
+// ─── Exception safety ────────────────────────────────────────────────────────
+// A task that throws must NOT escape a worker thread (that would std::terminate) nor
+// unwind the caller past still-running workers (use-after-free of the stack job). The
+// fan-out joins fully, the first exception is re-thrown from parallel_for on the
+// caller's thread, and the pool stays usable afterward.
+
+TEST(ThreadPool, ThrowingTaskPropagatesToCallerAndPoolStaysUsable) {
+  thread_pool pool;
+  if (pool.concurrency() <= 1)
+    GTEST_SKIP() << "need workers to exercise the fan-out throw path";
+  // Each task blocks briefly so the caller cannot drain the whole range alone — the
+  // throwing index is very likely claimed by a worker, exactly the case that used to
+  // std::terminate. The throw must instead surface at the caller.
+  std::atomic<int> ran{0};
+  bool threw = false;
+  try {
+    pool.parallel_for(256, [&](int i) {
+      ran.fetch_add(1, std::memory_order_relaxed);
+      if (i == 123)
+        throw std::runtime_error("boom");
+      std::this_thread::sleep_for(std::chrono::microseconds(50));
+    });
+  } catch (const std::runtime_error &e) {
+    threw = true;
+    EXPECT_STREQ(e.what(), "boom");
+  }
+  EXPECT_TRUE(threw) << "the task exception must propagate to parallel_for's caller";
+
+  // remaining drained, _job cleared, t_active_pool restored -> the pool still works.
+  std::vector<int> hits(500, 0);
+  pool.parallel_for(500, [&](int i) { hits[i]++; });
+  for (int h : hits)
+    ASSERT_EQ(h, 1);
+}
+
+TEST(ThreadPool, EveryTaskThrowsSurfacesExactlyOneAndDoesNotCrash) {
+  thread_pool pool;
+  int caught = 0;
+  try {
+    pool.parallel_for(200, [&](int i) { throw i; }); // every index throws (an int)
+  } catch (int) {
+    caught = 1;
+  } catch (...) {
+    caught = -1;
+  }
+  EXPECT_EQ(caught, 1) << "exactly one exception, of the thrown type, should surface";
+  std::atomic<int> acc{0};
+  pool.parallel_for(1000, [&](int) { acc.fetch_add(1, std::memory_order_relaxed); });
+  EXPECT_EQ(acc.load(), 1000);
+}
+
+TEST(ThreadPool, ThrowOnInlineAndWorkerlessPathsPropagatesAndRestoresState) {
+  thread_pool pool;
+  // n == 1 always runs inline on the caller; the throw must propagate AND restore
+  // t_active_pool so the next fan-out is not stuck on the re-entrant path.
+  EXPECT_THROW(pool.parallel_for(1, [&](int) { throw std::runtime_error("x"); }),
+               std::runtime_error);
+  std::atomic<int> acc{0};
+  pool.parallel_for(300, [&](int) { acc.fetch_add(1, std::memory_order_relaxed); });
+  EXPECT_EQ(acc.load(), 300);
+
+  // A workerless pool runs every index inline on the caller.
+  thread_pool solo(0);
+  EXPECT_THROW(solo.parallel_for(50,
+                                 [&](int i) {
+                                   if (i == 10)
+                                     throw std::runtime_error("y");
+                                 }),
+               std::runtime_error);
+  std::atomic<int> acc2{0};
+  solo.parallel_for(50, [&](int) { acc2.fetch_add(1, std::memory_order_relaxed); });
+  EXPECT_EQ(acc2.load(), 50);
+}
+
+TEST(ThreadPool, NestedTaskThrowPropagatesThroughOuterFanout) {
+  thread_pool pool;
+  int caught = 0;
+  try {
+    pool.parallel_for(32, [&](int i) {
+      // The inner fan-out runs inline (re-entrant). Its throw must escape the inner
+      // parallel_for, be caught by the outer task's run_indices, latched, and re-thrown
+      // to us from the outer parallel_for.
+      pool.parallel_for(8, [&](int k) {
+        if (i == 5 && k == 3)
+          throw std::runtime_error("nested");
+      });
+    });
+  } catch (const std::runtime_error &) {
+    caught = 1;
+  }
+  EXPECT_EQ(caught, 1);
+  std::atomic<int> acc{0};
+  pool.parallel_for(200, [&](int) { acc.fetch_add(1, std::memory_order_relaxed); });
+  EXPECT_EQ(acc.load(), 200);
 }

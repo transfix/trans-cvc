@@ -40,6 +40,7 @@
 // finishing caller's `_job = nullptr` can never stomp a freshly posted job.
 
 #include <cvc/core/thread_pool.h>
+#include <exception>
 
 namespace cvc {
 
@@ -72,6 +73,27 @@ thread_pool::~thread_pool() {
       w.join();
 }
 
+void thread_pool::run_indices(job &j) noexcept {
+  for (int i = j.cursor.fetch_add(1, std::memory_order_relaxed); i < j.n;
+       i = j.cursor.fetch_add(1, std::memory_order_relaxed)) {
+    // A task already threw: drain the remaining indices without running work, so the
+    // fan-out still joins promptly and every participant reaches its `remaining`
+    // decrement. (Acquire pairs with the release store in the catch below.)
+    if (j.aborted.load(std::memory_order_acquire))
+      continue;
+    try {
+      (*j.fn)(i);
+    } catch (...) {
+      // Latch the first exception; it is re-thrown once from the orchestrator after
+      // the whole fan-out has joined. Never let it escape this thread.
+      std::lock_guard<std::mutex> lk(j.emtx);
+      if (!j.eptr)
+        j.eptr = std::current_exception();
+      j.aborted.store(true, std::memory_order_release);
+    }
+  }
+}
+
 void thread_pool::worker_loop(int worker_index) {
   std::uint64_t seen = 0;
   for (;;) {
@@ -92,9 +114,7 @@ void thread_pool::worker_loop(int worker_index) {
 
     const thread_pool *prev = t_active_pool;
     t_active_pool = this;
-    for (int i = j->cursor.fetch_add(1, std::memory_order_relaxed); i < j->n;
-         i = j->cursor.fetch_add(1, std::memory_order_relaxed))
-      (*j->fn)(i);
+    run_indices(*j); // noexcept: task throws are latched into *j, not propagated here
     t_active_pool = prev;
 
     // Last participant out wakes the caller. (No j access past this point.)
@@ -109,12 +129,20 @@ void thread_pool::parallel_for(int n, const std::function<void(int)> &fn, int ma
   if (n <= 0)
     return;
 
-  // Trivial, workerless, or re-entrant: just run it on the caller.
+  // Trivial, workerless, or re-entrant: just run it on the caller. A task throw
+  // propagates straight to our caller (there are no worker threads to strand and no
+  // shared stack job to unwind past); we only have to restore t_active_pool first so a
+  // later parallel_for on this thread is not stuck on the re-entrant path forever.
   if (n == 1 || _workers.empty() || t_active_pool == this) {
     const thread_pool *prev = t_active_pool;
     t_active_pool = this;
-    for (int i = 0; i < n; ++i)
-      fn(i);
+    try {
+      for (int i = 0; i < n; ++i)
+        fn(i);
+    } catch (...) {
+      t_active_pool = prev;
+      throw;
+    }
     t_active_pool = prev;
     return;
   }
@@ -149,9 +177,7 @@ void thread_pool::parallel_for(int n, const std::function<void(int)> &fn, int ma
 
   const thread_pool *prev = t_active_pool;
   t_active_pool = this;
-  for (int i = j.cursor.fetch_add(1, std::memory_order_relaxed); i < j.n;
-       i = j.cursor.fetch_add(1, std::memory_order_relaxed))
-    fn(i);
+  run_indices(j); // noexcept: task throws are latched into j, re-thrown below once joined
   t_active_pool = prev;
 
   // If the caller isn't the last one out, wait for the workers to drain.
@@ -159,8 +185,22 @@ void thread_pool::parallel_for(int n, const std::function<void(int)> &fn, int ma
     std::unique_lock<std::mutex> lk(_mtx);
     _done.wait(lk, [&] { return j.remaining.load(std::memory_order_acquire) == 0; });
   }
-  std::lock_guard<std::mutex> lk(_mtx);
-  _job = nullptr;
+  {
+    std::lock_guard<std::mutex> lk(_mtx);
+    _job = nullptr;
+  }
+
+  // The whole fan-out has joined (remaining hit 0, which the acquire load above
+  // synchronizes with), so j.eptr is fully published and no worker touches j anymore.
+  // Re-throw the first task exception, if any, on the orchestrator's thread — matching
+  // the semantics of a serial loop that let the throw escape.
+  std::exception_ptr eptr;
+  {
+    std::lock_guard<std::mutex> lk(j.emtx);
+    eptr = j.eptr;
+  }
+  if (eptr)
+    std::rethrow_exception(eptr);
 }
 
 } // namespace cvc

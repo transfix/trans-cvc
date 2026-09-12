@@ -26,6 +26,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <mutex>
 #include <thread>
@@ -80,6 +81,15 @@ public:
   // `max_par` caps the TOTAL participants (including the caller) for this one
   // call; <= 0 means use the whole pool. A cheap, fine-grained region can pass a
   // small cap so it doesn't wake every worker. n <= 0 is a no-op.
+  //
+  // Exception safety: if one or more fn(i) throw, the fan-out still joins fully (no
+  // worker is left running, no `remaining` count is stranded), the remaining indices
+  // are drained without invoking fn, and the FIRST thrown exception is re-thrown from
+  // parallel_for on the caller's thread. A throw thus propagates to the caller exactly
+  // as a serial loop would, instead of escaping a worker thread (std::terminate) or
+  // unwinding the caller past the still-running workers. Which index "wins" under
+  // concurrent throws is unspecified; fn should not rely on all indices having run when
+  // any throws.
   void parallel_for(int n, const std::function<void(int)> &fn, int max_par = 0);
 
 private:
@@ -90,10 +100,21 @@ private:
   struct job {
     int n = 0;
     const std::function<void(int)> *fn = nullptr;
-    std::atomic<int> cursor{0};    // next index to claim
-    std::atomic<int> remaining{0}; // participants (caller + enlisted workers) still running
-    int enlisted = 0;              // worker indices [0, enlisted) take part
+    std::atomic<int> cursor{0};       // next index to claim
+    std::atomic<int> remaining{0};    // participants (caller + enlisted workers) still running
+    int enlisted = 0;                 // worker indices [0, enlisted) take part
+    std::atomic<bool> aborted{false}; // a task threw; remaining indices drain without running fn
+    std::exception_ptr eptr;          // first exception thrown by any task (guarded by emtx)
+    std::mutex emtx;                  // guards eptr's one-time set
   };
+
+  // Claim and run indices from `j` on the calling thread until the cursor drains.
+  // noexcept: a task exception is caught, the FIRST one is stored in j.eptr and the
+  // job is marked aborted (later indices drain without invoking fn), so the exception
+  // can be re-thrown once from the orchestrator after the whole fan-out has joined —
+  // never out of a worker thread (which would std::terminate) or mid-fan-out (which
+  // would unwind the caller's stack job while workers still reference it).
+  void run_indices(job &j) noexcept;
 
   std::vector<std::thread> _workers;
   std::mutex _post_mtx; // serializes orchestrators: held from job post to drain+clear
