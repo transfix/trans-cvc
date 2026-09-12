@@ -15,6 +15,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cvc/core/thread_pool.h>
 #include <cvc/nav/coef_mlp.h>
 #include <cvc/nav/drive.h>
 #include <cvc/nav/grid_nav.h>
@@ -830,6 +831,93 @@ TEST(NavSimWorld, LiveSensingRebuildsTheField) {
       ++moved;
   }
   EXPECT_GT(moved, 0) << "agents should drive on the live-sensing path";
+}
+
+// step()'s per-plane field rebuild is fanned out across a borrowed thread_pool when
+// one is injected (pool_ && M_ > 1). Each plane m touches only its own [m*hw] belief/
+// occ/field slice with its own scratch, so the pooled rebuild MUST be bit-identical to
+// the serial loop. Run the live-sensing scenario (the only path that rebuilds) with a
+// PRIVATE plane per vehicle (map_id[i]=i, M==N — the worst case, N rebuilds/sense) both
+// ways and require the swarm state to match exactly, tick for tick. This locks in the
+// parallelization's correctness and covers the new pooled branch.
+TEST(NavSimWorld, PooledRebuildMatchesSerialBitExact) {
+  const int R = 48, C = 48;
+  std::vector<std::uint8_t> truth((std::size_t)R * C, 0), prior((std::size_t)R * C, 0);
+  for (int r = 0; r < R; ++r)
+    for (int c = 0; c < C; ++c)
+      if (r == 0 || c == 0 || r == R - 1 || c == C - 1) {
+        truth[r * C + c] = 1;
+        prior[r * C + c] = 1;
+      }
+  for (int r = R / 4; r < 3 * R / 4; ++r)
+    prior[r * C + C / 2] = 1; // phantom wall in the prior only -> sensed away -> rebuilds
+
+  cvc::nav::sim_world::config cfg;
+  cfg.rows = R;
+  cfg.cols = C;
+  cfg.min_x = -400;
+  cfg.min_y = -400;
+  cfg.max_x = 400;
+  cfg.max_y = 400;
+  cfg.scale = 0.02;
+  cfg.veh.rr = 3.0f;
+  cfg.veh.d_hat = 7.0f;
+  cfg.veh.dt = 0.06f;
+  cfg.veh.nsub = 1;
+  cfg.range_m = 200.0;
+  cfg.n_rays = 180;
+  cfg.sense_every = 1;
+  cfg.freeze_sense = false;
+
+  auto cell_on = [&](int r, int c, float &onx, float &ony) {
+    const double x = cfg.min_x + (double)c / (cfg.cols - 1) * (cfg.max_x - cfg.min_x);
+    const double y = cfg.min_y + (double)r / (cfg.rows - 1) * (cfg.max_y - cfg.min_y);
+    onx = (float)((x - cfg.cx) * cfg.scale);
+    ony = (float)((y - cfg.cy) * cfg.scale);
+  };
+  const int N = 8;
+  std::vector<float> o(2 * N), goal(2 * N), color(3 * N, 0.5f);
+  for (int i = 0; i < N; ++i) {
+    const int row = R / 4 + i * (R / 2) / N;
+    cell_on(row, C / 2 - 4, o[2 * i], o[2 * i + 1]);
+    cell_on(row, C / 2 + 6, goal[2 * i], goal[2 * i + 1]);
+  }
+  std::vector<int> map_id(N);
+  for (int i = 0; i < N; ++i)
+    map_id[i] = i; // private plane per vehicle => M == N (the demo's fog-of-war layout)
+
+  cvc::nav::sim_world serialW(cfg, truth.data(), prior.data(), cvc::nav::coef_mlp::default_biased(),
+                              o.data(), goal.data(), color.data(), N, map_id.data(), N);
+  cvc::nav::sim_world pooledW(cfg, truth.data(), prior.data(), cvc::nav::coef_mlp::default_biased(),
+                              o.data(), goal.data(), color.data(), N, map_id.data(), N);
+  cvc::thread_pool pool(4); // 4 workers + caller vs M==8 planes -> genuinely fans out
+  pooledW.set_thread_pool(&pool);
+  ASSERT_EQ(serialW.planes(), N);
+  ASSERT_EQ(pooledW.planes(), N);
+
+  std::vector<float> ps(2 * N), pp(2 * N), hs(N), hp(N), ss(N), sps(N);
+  std::vector<int> ms(N), mp(N);
+  std::vector<std::uint8_t> rs(N), rp(N);
+  bool rebuilt = false;
+  for (int t = 0; t < 60; ++t) {
+    serialW.step(0);
+    pooledW.step(0);
+    ASSERT_EQ(serialW.field_version(), pooledW.field_version())
+        << "field_version diverged at tick " << t;
+    if (serialW.field_version() > 0)
+      rebuilt = true;
+    serialW.snapshot(ps.data(), hs.data(), ss.data(), ms.data(), rs.data());
+    pooledW.snapshot(pp.data(), hp.data(), sps.data(), mp.data(), rp.data());
+    for (int i = 0; i < 2 * N; ++i)
+      ASSERT_EQ(ps[i], pp[i]) << "pose[" << i << "] diverged at tick " << t; // bit-exact
+    for (int i = 0; i < N; ++i) {
+      ASSERT_EQ(hs[i], hp[i]) << "heading[" << i << "] tick " << t;
+      ASSERT_EQ(ss[i], sps[i]) << "speed[" << i << "] tick " << t;
+      ASSERT_EQ(ms[i], mp[i]) << "mode[" << i << "] tick " << t;
+    }
+  }
+  EXPECT_TRUE(rebuilt)
+      << "the scenario must actually trigger a rebuild for this test to mean anything";
 }
 
 namespace {
